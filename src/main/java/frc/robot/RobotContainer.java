@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.enums.AlignRequestType;
+import frc.robot.enums.LightPattern;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Align;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
