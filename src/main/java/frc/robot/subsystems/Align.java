@@ -4,25 +4,19 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.enums.AlignRequestType;
-import frc.robot.RobotContainer;
 
 public class Align extends SubsystemBase {
 
   private int requestedAlignSection = 0;
 
   private CommandSwerveDrivetrain drive;
-
-  private Pose2d[] redReefPoses = {new Pose2d(0, 0, new Rotation2d(0)), new Pose2d(1, 1, new Rotation2d(0)), new Pose2d(2, 2, new Rotation2d(0)), new Pose2d(3, 3, new Rotation2d(0)), new Pose2d(4, 4, new Rotation2d(0)), new Pose2d(5, 5, new Rotation2d(0))};
 
   public Align(CommandSwerveDrivetrain drive) {
     this.drive = drive;
@@ -64,6 +58,6 @@ public class Align extends SubsystemBase {
   }
 
   public Command alignReef(AlignRequestType side) {
-    return drive.pathFind(Constants.RedAlignPositions[0][side.ordinal()]);
+    return drive.pathFind(Constants.RedAlignPositions[0][side.ordinal()]).onlyWhile(() -> RobotContainer.getDriveControllerLeftDistance() < 0.35);
   }
 }

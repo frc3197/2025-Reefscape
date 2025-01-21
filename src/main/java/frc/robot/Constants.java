@@ -60,5 +60,33 @@ public class Constants {
 						.withSupplyCurrentLimit(Amps.of(20))
 						.withSupplyCurrentLimitEnable(true))
 				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+
+		public static final int elevatorEncoderChannelA = 0;
+		public static final int elevatorEncoderChannelB = 1;
+	}
+
+	public static class AlgaeConstants {
+		public static final int deployId = 10;
+		public static final int spinId = 11;
+
+		public static TalonFXConfiguration deployConfig = new TalonFXConfiguration().withCurrentLimits(
+				new CurrentLimitsConfigs()
+						.withStatorCurrentLimit(Amps.of(20))
+						.withStatorCurrentLimitEnable(true)
+						.withSupplyCurrentLimit(Amps.of(20))
+						.withSupplyCurrentLimitEnable(true))
+				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+
+		public static TalonFXConfiguration spinConfig = new TalonFXConfiguration().withCurrentLimits(
+				new CurrentLimitsConfigs()
+						.withStatorCurrentLimit(Amps.of(20))
+						.withStatorCurrentLimitEnable(true)
+						.withSupplyCurrentLimit(Amps.of(20))
+						.withSupplyCurrentLimitEnable(true))
+				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+	}
+
+	public static class VisionConstants {
+		public static String limelightFrontName = "front";
 	}
 }

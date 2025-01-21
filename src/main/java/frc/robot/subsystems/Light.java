@@ -6,11 +6,10 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
+import frc.robot.enums.LightPattern;
 
 public class Light extends SubsystemBase {
 
@@ -18,7 +17,10 @@ public class Light extends SubsystemBase {
   private AddressableLEDBuffer buffer;
   private Timer timer = new Timer();
 
+  private LightPattern pattern = LightPattern.IdleAlliance;
+
   public Light() {
+
     led = new AddressableLED(1);
     buffer = new AddressableLEDBuffer(60 + 102);
     led.setLength(buffer.getLength());
@@ -32,17 +34,28 @@ public class Light extends SubsystemBase {
 
   @Override
   public void periodic() {
-    setIdleAlliance();
+    switch (pattern) {
+      case IdleAlliance:
+        setIdleAlliance();
+        break;
+
+      default:
+        break;
+    }
   }
 
   public void setIdleAlliance() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the RGB values for red
       if (RobotContainer.isRed())
-        buffer.setRGB(i, 0, 130 + (int)Math.round(Math.cos((timer.get()*1.25 + (i / 6)) * 2.75) * 125.0), 0);
+        buffer.setRGB(i, 0, 130 + (int) Math.round(Math.cos((timer.get() * 1.25 + (i / 6)) * 2.75) * 125.0), 0);
       else
-        buffer.setRGB(i, 0, 0, 130 + (int)Math.round(Math.cos((timer.get()*1.25 + (i / 6)) * 2.75) * 125.0));
+        buffer.setRGB(i, 0, 0, 130 + (int) Math.round(Math.cos((timer.get() * 1.25 + (i / 6)) * 2.75) * 125.0));
     }
     led.setData(buffer);
+  }
+
+  public void setLightPattern(LightPattern pattern) {
+    this.pattern = pattern;
   }
 }

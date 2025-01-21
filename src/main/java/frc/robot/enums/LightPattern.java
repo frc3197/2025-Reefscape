@@ -5,9 +5,10 @@
 package frc.robot.enums;
 
 /** Add your docs here. */
-public enum AlignRequestType {
-    LeftReefAlign,
-    RightReefAlign,
-    LeftStationAlign,
-    RightStationAlign
+public enum LightPattern {
+    IdleAlliance,
+    IdleOrange,
+    Autonomous,
+    NotZeroed,
+    Tele
 }
