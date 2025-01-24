@@ -4,20 +4,45 @@
 
 package frc.robot.subsystems;
 
-import au.grapplerobotics.LaserCan;
+import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class Intake extends SubsystemBase {
 
-    private LaserCan intakeSensor;
+  private final TalonFX leftIntakeMotor;
+  private final TalonFX rightIntakeMotor;
 
   /** Creates a new Intake. */
   public Intake() {
-    intakeSensor = new LaserCan(0);
+
+    leftIntakeMotor = new TalonFX(Constants.IntakeConstants.leftIntakeMotorId);
+    rightIntakeMotor = new TalonFX(Constants.IntakeConstants.rightIntakeMotorId);
+
+    leftIntakeMotor.getConfigurator().apply(Constants.IntakeConstants.leftIntakeMotorConfig);
+    rightIntakeMotor.getConfigurator().apply(Constants.IntakeConstants.rightIntakeMotorConfig);
+
   }
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
+  }
+
+  public Command getIntakeCommand() {
+    return Commands.run(() -> {
+      leftIntakeMotor.set(Constants.IntakeConstants.leftMotorSpeed);
+      rightIntakeMotor.set(Constants.IntakeConstants.rightMotorSpeed);
+    }, this).withName("Set Intake");
+  }
+
+  public Command getIntakeStopCommand() {
+    return Commands.runOnce(() -> {
+      leftIntakeMotor.set(0);
+      rightIntakeMotor.set(0);
+    }, this).withName("Stop Intake");
   }
 }

@@ -4,15 +4,22 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.hardware.TalonFX;
+import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.wpilibj.DutyCycle;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 
 public class Elevator extends SubsystemBase {
 
@@ -21,14 +28,27 @@ public class Elevator extends SubsystemBase {
 
   private final Encoder elevatorEncoder;
 
-  public Elevator() {
-    leftMotor = new TalonFX(Constants.ElevatorConstants.leftElevatorId);
-    rightMotor = new TalonFX(Constants.ElevatorConstants.rightElevatorId);
+  private ElevatorFeedforward elevatorFeedforward;
+  private final PIDController testPID;
 
-    leftMotor.getConfigurator().apply(Constants.ElevatorConstants.leftElevatorConfig);
-    rightMotor.getConfigurator().apply(Constants.ElevatorConstants.rightElevatorConfig);
+  private double targetHeight = 0;
+
+  public Elevator() {
+    leftMotor = new TalonFX(Constants.ElevatorConstants.leftElevatorMotorId);
+    rightMotor = new TalonFX(Constants.ElevatorConstants.rightElevatorMotorId);
+
+    leftMotor.getConfigurator().apply(Constants.ElevatorConstants.leftElevatorMotorConfig);
+    rightMotor.getConfigurator().apply(Constants.ElevatorConstants.rightElevatorMotorConfig);
+
+    leftMotor.setNeutralMode(NeutralModeValue.Brake);
+    rightMotor.setNeutralMode(NeutralModeValue.Brake);
 
     elevatorEncoder = new Encoder(Constants.ElevatorConstants.elevatorEncoderChannelA, Constants.ElevatorConstants.elevatorEncoderChannelB);
+  
+    elevatorFeedforward = Constants.ElevatorConstants.lightLoadElevatorFeed;
+    testPID = Constants.ElevatorConstants.lightLoadElevatorPID;
+
+    elevatorEncoder.reset();
   }
 
   @Override
@@ -36,6 +56,25 @@ public class Elevator extends SubsystemBase {
 
     SmartDashboard.putNumber("Elevator encoder", readEncoder());
     SmartDashboard.putNumber("Elevator height", getElevatorHeight());
+
+    if(!RobotContainer.isTestMode().getAsBoolean()) {
+
+      double calculatedSpeed = testPID.calculate(getElevatorHeight() - targetHeight);
+      double feedSpeed = elevatorFeedforward.calculate(leftMotor.get()/10);
+      
+      SmartDashboard.putNumber("Elevator Calculation", calculatedSpeed);
+      SmartDashboard.putNumber("Feed Elevator Calculation", feedSpeed);
+
+      double finalSpeed = MathUtil.clamp(calculatedSpeed + feedSpeed, -0.5, 0.5);
+
+      //leftMotor.set(finalSpeed);
+      //rightMotor.set(finalSpeed);
+    }
+
+    // Check for elevator errors
+    if(readEncoder() < 0) {
+      RobotContainer.addError(null);
+    }
 
   }
 
@@ -46,19 +85,34 @@ public class Elevator extends SubsystemBase {
     });
   }
 
+  public Command getManualSupplierCommand(DoubleSupplier speedSupplier) {
+    return Commands.run( () -> {
+      leftMotor.set(speedSupplier.getAsDouble());
+      rightMotor.set(speedSupplier.getAsDouble());
+    });
+  }
+
   public double readEncoder() {
-    return elevatorEncoder.get();
+    return elevatorEncoder.getRaw();
   }
 
   private void resetEncoder() {
     elevatorEncoder.reset();
   }
 
-  public InstantCommand getResetCommand() {
-    return new InstantCommand(this::resetEncoder);
+  public Command getEncoderResetCommand() {
+    return Commands.runOnce(this::resetEncoder);
   }
 
   public double getElevatorHeight() {
-    return (readEncoder() * 10) + 5;
+    return ((readEncoder() / Constants.ElevatorConstants.encoderHighValue) * (Constants.ElevatorConstants.elevatorHighHeight - Constants.ElevatorConstants.elevatorLowHeight)) + Constants.ElevatorConstants.elevatorLowHeight;
+  }
+
+  public void setTargetHeight(double value) {
+    targetHeight = value;
+  }
+
+  public Command setTargetHeightCommand(double value) {
+    return Commands.runOnce(() -> {setTargetHeight(value);});
   }
 }

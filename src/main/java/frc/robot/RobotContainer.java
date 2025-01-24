@@ -5,6 +5,9 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -15,15 +18,21 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.enums.AlignRequestType;
 import frc.robot.enums.LightPattern;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Align;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Light;
+import frc.robot.subsystems.Intake;
+import frc.robot.enums.*;
+import frc.robot.managersubsystems.LightManager;
+import frc.robot.managersubsystems.ErrorManager;
+import frc.robot.subsystems.Outtake;
 import frc.robot.subsystems.Vision;
+import frc.robot.util.*;
 
+@SuppressWarnings("unused")
 public class RobotContainer {
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -39,13 +48,20 @@ public class RobotContainer {
 
     private final Telemetry logger = new Telemetry(TunerConstants.MaxSpeed);
 
+    // Managers
+    private final static LightManager lightManager = new LightManager();
+    private final static ErrorManager errorManager = new ErrorManager();
+
     // Subsystems
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final Vision poseEstimator = new Vision(drivetrain);
     private final Align align = new Align(drivetrain);
     private final Elevator elevator = new Elevator();
-    private final static Light light = new Light();
+    private final Intake intake = new Intake();
+    private final Outtake outtake = new Outtake();
+    private final Algae algae = new Algae();
 
+    // Controllers
     private final static CommandXboxController driverController = new CommandXboxController(0);
     private final static CommandXboxController operatorController = new CommandXboxController(1);
 
@@ -82,11 +98,36 @@ public class RobotContainer {
          * -driverController.getLeftX()))));
          */
 
-        driverController.leftTrigger().onTrue(align.alignReef(AlignRequestType.LeftReefAlign));
-        driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign));
+        //driverController.leftTrigger().onTrue(align.alignReef(AlignRequestType.LeftReefAlign));
+        //driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign));
 
-        driverController.y().onTrue(elevator.getManualCommand(1)).onFalse(elevator.getManualCommand(0.0));
-        driverController.a().onTrue(elevator.getManualCommand(-0.15)).onFalse(elevator.getManualCommand(0.0));
+        // Elevator bindings
+        driverController.leftTrigger(0.05).whileTrue(elevator.getManualSupplierCommand(driverController::getLeftTriggerAxis))
+                .onFalse(elevator.getManualCommand(0.0));
+        driverController.rightTrigger(0.05).whileTrue(elevator.getManualSupplierCommand(() -> {
+            return -1 * driverController.getRightTriggerAxis();
+        })).onFalse(elevator.getManualCommand(0.0));
+
+        driverController.y().onTrue(elevator.getManualCommand(1)).onFalse(elevator.getManualCommand(0.0)).and(isTestMode());
+        driverController.a().onTrue(elevator.getManualCommand(-0.6)).onFalse(elevator.getManualCommand(0.0)).and(isTestMode());
+
+        operatorController.y().onTrue(elevator.setTargetHeightCommand(50));        
+        operatorController.b().onTrue(elevator.setTargetHeightCommand(20));        
+        operatorController.a().onTrue(elevator.setTargetHeightCommand(5));        
+
+        // Reset encoder
+        operatorController.start().onTrue(elevator.getEncoderResetCommand());
+
+        // Intake bindings
+        driverController.b().onTrue(
+                intake.getIntakeCommand().raceWith(outtake.feedOuttake1().andThen(outtake.feedOuttake2())).andThen(intake.getIntakeStopCommand()));
+
+        // Outtake bindings
+        driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
+
+        // Algae bindings
+        driverController.leftBumper().onTrue(algae.setAlgaeGrabbers(0.5)).onFalse(algae.setAlgaeGrabbers(0));
+        driverController.rightBumper().onTrue(algae.setAlgaeGrabbers(-0.5)).onFalse(algae.setAlgaeGrabbers(0));
 
         /*
          * // Run SysId routines when holding back/start and X/Y.
@@ -125,6 +166,10 @@ public class RobotContainer {
         return Math.sqrt(Math.pow(driverController.getLeftX(), 2) + Math.pow(driverController.getLeftY(), 2));
     }
 
+    public static BooleanSupplier isTestMode() {
+        return DriverStation::isTestEnabled;
+    }
+
     public static void addRumble(int controller, double value, double time, RumbleType type) {
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
@@ -145,8 +190,16 @@ public class RobotContainer {
         return false;
     }
 
-    public void setLightPattern(LightPattern pattern) {
-        light.setLightPattern(pattern);
+    public static void setLightPattern(LightPattern pattern) {
+        lightManager.setLightPattern(pattern);
+    }
+
+    public static void addError(ErrorBody error) {
+        errorManager.addError(error);
+    }
+
+    public static boolean hasError(ErrorMode mode) {
+        return errorManager.checkForExistingError(mode);
     }
 
     public static void setEnabled(boolean value) {
@@ -156,7 +209,7 @@ public class RobotContainer {
     private Command runAuto = drivetrain.getAutoPath("Test");
 
     public Command getAutonomousCommand() {
-        CommandScheduler.getInstance().schedule(elevator.getResetCommand());
+        CommandScheduler.getInstance().schedule(elevator.getEncoderResetCommand());
 
         return new SequentialCommandGroup(
                 drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),

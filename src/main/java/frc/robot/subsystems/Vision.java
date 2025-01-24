@@ -13,6 +13,7 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.LimelightHelpers;
@@ -33,8 +34,13 @@ public class Vision extends SubsystemBase {
 
     Pose3d bestPose = getDesiredPose();
 
+    SmartDashboard.putNumber("Timestamp", getTime());
+
     if (bestPose != null) {
+      SmartDashboard.putBoolean("HAS VISION", true);
       drive.addNewVisionMeasurement(bestPose.toPose2d(), getTime());
+    } else {
+      SmartDashboard.putBoolean("HAS VISION", false);
     }
   }
 
@@ -44,6 +50,9 @@ public class Vision extends SubsystemBase {
   }
 
   private double getTime() {
-    return Utils.fpgaToCurrentTime(Timer.getFPGATimestamp() - (LimelightHelpers.getLatency_Pipeline(Constants.VisionConstants.limelightFrontName)/1000.0) - (LimelightHelpers.getLatency_Capture(Constants.VisionConstants.limelightFrontName)/1000.0));
+    return Utils.getCurrentTimeSeconds();
+    /*return Utils.fpgaToCurrentTime(Timer.getTimestamp()
+        - (LimelightHelpers.getLatency_Pipeline(Constants.VisionConstants.limelightFrontName) / 1000.0)
+        - (LimelightHelpers.getLatency_Capture(Constants.VisionConstants.limelightFrontName) / 1000.0));*/
   }
 }
