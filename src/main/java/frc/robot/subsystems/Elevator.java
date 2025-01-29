@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,6 +21,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.enums.ErrorMode;
+import frc.robot.util.ErrorBody;
 
 public class Elevator extends SubsystemBase {
 
@@ -43,11 +46,13 @@ public class Elevator extends SubsystemBase {
     leftMotor.setNeutralMode(NeutralModeValue.Brake);
     rightMotor.setNeutralMode(NeutralModeValue.Brake);
 
-    elevatorEncoder = new Encoder(Constants.ElevatorConstants.elevatorEncoderChannelA, Constants.ElevatorConstants.elevatorEncoderChannelB);
-  
+    elevatorEncoder = new Encoder(Constants.ElevatorConstants.elevatorEncoderChannelA,
+        Constants.ElevatorConstants.elevatorEncoderChannelB);
+
     elevatorFeedforward = Constants.ElevatorConstants.lightLoadElevatorFeed;
     testPID = Constants.ElevatorConstants.lightLoadElevatorPID;
 
+    elevatorEncoder.setReverseDirection(true);
     elevatorEncoder.reset();
   }
 
@@ -57,23 +62,27 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elevator encoder", readEncoder());
     SmartDashboard.putNumber("Elevator height", getElevatorHeight());
 
-    if(!RobotContainer.isTestMode().getAsBoolean()) {
+    if (!RobotContainer.isTestMode().getAsBoolean() && false) {
 
-      double calculatedSpeed = testPID.calculate(getElevatorHeight() - targetHeight);
-      double feedSpeed = elevatorFeedforward.calculate(leftMotor.get()/10);
-      
-      SmartDashboard.putNumber("Elevator Calculation", calculatedSpeed);
+      double calculatedSpeed = testPID.calculate((getElevatorHeight() - targetHeight)/1000);
+      double feedSpeed = elevatorFeedforward.calculate(leftMotor.get() / 10);
+
+      SmartDashboard.putNumber("Elevator PID calc", calculatedSpeed);
       SmartDashboard.putNumber("Feed Elevator Calculation", feedSpeed);
 
-      double finalSpeed = MathUtil.clamp(calculatedSpeed + feedSpeed, -0.5, 0.5);
+      double finalSpeed = MathUtil.clamp(calculatedSpeed, -0.95, 0.95);
 
-      //leftMotor.set(finalSpeed);
-      //rightMotor.set(finalSpeed);
+      leftMotor.set(finalSpeed);
+      rightMotor.set(finalSpeed);
     }
 
     // Check for elevator errors
-    if(readEncoder() < 0) {
-      RobotContainer.addError(null);
+    if (readEncoder() < -100) {
+      if (!RobotContainer.hasError(ErrorMode.ELEVATOR_REQUIRES_ZERO)) {
+        RobotContainer.addError(new ErrorBody(ErrorMode.ELEVATOR_REQUIRES_ZERO, () -> {
+          return readEncoder() > -100;
+        }));
+      }
     }
 
   }
@@ -86,7 +95,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public Command getManualSupplierCommand(DoubleSupplier speedSupplier) {
-    return Commands.run( () -> {
+    return Commands.run(() -> {
       leftMotor.set(speedSupplier.getAsDouble());
       rightMotor.set(speedSupplier.getAsDouble());
     });
@@ -105,7 +114,9 @@ public class Elevator extends SubsystemBase {
   }
 
   public double getElevatorHeight() {
-    return ((readEncoder() / Constants.ElevatorConstants.encoderHighValue) * (Constants.ElevatorConstants.elevatorHighHeight - Constants.ElevatorConstants.elevatorLowHeight)) + Constants.ElevatorConstants.elevatorLowHeight;
+    return ((readEncoder() / Constants.ElevatorConstants.encoderHighValue)
+        * (Constants.ElevatorConstants.elevatorHighHeight - Constants.ElevatorConstants.elevatorLowHeight))
+        + Constants.ElevatorConstants.elevatorLowHeight;
   }
 
   public void setTargetHeight(double value) {
@@ -113,6 +124,8 @@ public class Elevator extends SubsystemBase {
   }
 
   public Command setTargetHeightCommand(double value) {
-    return Commands.runOnce(() -> {setTargetHeight(value);});
+    return Commands.runOnce(() -> {
+      setTargetHeight(value);
+    });
   }
 }

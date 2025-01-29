@@ -15,31 +15,32 @@ import static edu.wpi.first.units.Units.*;
 
 public class Constants {
 	public static Pose2d[][] RedAlignPositions = {
-			// Back Right
+
+			// Front Right: ZERO
 			{
 					// Left
-					new Pose2d(12.15, 5.12, new Rotation2d(Units.degreesToRadians(-60))),
+					new Pose2d(13.92, 5.12, new Rotation2d(Units.degreesToRadians(-60))),
 
 					// Right
-					new Pose2d(12.49, 5.22, new Rotation2d(Units.degreesToRadians(-60)))
+					new Pose2d(13.59, 5.26, new Rotation2d(Units.degreesToRadians(-60)))
 			},
 
-			// Front Right
+			// Front middle: ONE
 			{
 					// Left
-					new Pose2d(13.92, 5.12, new Rotation2d(Units.degreesToRadians(60))),
+					new Pose2d(14.25, 3.75, new Rotation2d(Units.degreesToRadians(180))),
 
 					// Right
-					new Pose2d(13.59, 5.26, new Rotation2d(Units.degreesToRadians(60)))
+					new Pose2d(14.25, 4.23, new Rotation2d(Units.degreesToRadians(180)))
 			},
 
-			// Front middle
+			// Back Right: FIVE
 			{
 					// Left
-					new Pose2d(14.35, 3.82, new Rotation2d(0)),
+					new Pose2d(12.15, 5.12, new Rotation2d(Units.degreesToRadians(60))),
 
 					// Right
-					new Pose2d(14.35, 4.23, new Rotation2d(0))
+					new Pose2d(12.49, 5.22, new Rotation2d(Units.degreesToRadians(60)))
 			}
 	};
 
@@ -77,6 +78,12 @@ public class Constants {
 		// Measured in cm
 		public static final int elevatorLowHeight = 30;
 		public static final int elevatorHighHeight = 200;
+
+		public static final int loadingStationEncoder = 2500;
+		public static final int level1Encoder = 1000;
+		public static final int level2Encoder = 25000;
+		public static final int level3Encoder = 44500;
+		public static final int level4Encoder = 13500;
 	}
 
 	public static class AlgaeConstants {
@@ -150,7 +157,7 @@ public class Constants {
 		public static final int outtakeMotorId = 14;
 		public static final int outtakeTimeOfFlightId = 0;
 
-		public static final double sensorRange = 60;
+		public static final double sensorRange = 140;
 
 		public static final double outtakeFeedSpeed = 0.25;
 		public static final double outtakeSpitSpeed = 1;
@@ -166,6 +173,6 @@ public class Constants {
 	}
 
 	public static class VisionConstants {
-		public static String limelightFrontName = "front";
+		public static String limelightFrontName = "";
 	}
 }

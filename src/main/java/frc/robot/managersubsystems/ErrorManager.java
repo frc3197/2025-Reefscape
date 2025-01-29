@@ -30,12 +30,20 @@ public class ErrorManager extends SubsystemBase {
   }
 
   public boolean checkForExistingError(ErrorMode mode) {
+    if(errorList.size() < 1) {
+      return false;
+    }
+
     for (ErrorBody obj : errorList) {
       if (mode == obj.getErrorMode()) {
         return true;
       }
     }
     return false;
+  }
+
+  public boolean hasErrors() {
+    return errorList.size() > 0;
   }
 
   private void pollErrors() {

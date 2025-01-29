@@ -14,17 +14,17 @@ import frc.robot.Constants;
 
 public class Intake extends SubsystemBase {
 
-  private final TalonFX leftIntakeMotor;
-  private final TalonFX rightIntakeMotor;
+  //private final TalonFX leftIntakeMotor;
+  //private final TalonFX rightIntakeMotor;
 
   /** Creates a new Intake. */
   public Intake() {
 
-    leftIntakeMotor = new TalonFX(Constants.IntakeConstants.leftIntakeMotorId);
-    rightIntakeMotor = new TalonFX(Constants.IntakeConstants.rightIntakeMotorId);
+    //leftIntakeMotor = new TalonFX(Constants.IntakeConstants.leftIntakeMotorId);
+    //rightIntakeMotor = new TalonFX(Constants.IntakeConstants.rightIntakeMotorId);
 
-    leftIntakeMotor.getConfigurator().apply(Constants.IntakeConstants.leftIntakeMotorConfig);
-    rightIntakeMotor.getConfigurator().apply(Constants.IntakeConstants.rightIntakeMotorConfig);
+    //leftIntakeMotor.getConfigurator().apply(Constants.IntakeConstants.leftIntakeMotorConfig);
+    //rightIntakeMotor.getConfigurator().apply(Constants.IntakeConstants.rightIntakeMotorConfig);
 
   }
 
@@ -32,17 +32,17 @@ public class Intake extends SubsystemBase {
   public void periodic() {
   }
 
-  public Command getIntakeCommand() {
-    return Commands.run(() -> {
-      leftIntakeMotor.set(Constants.IntakeConstants.leftMotorSpeed);
-      rightIntakeMotor.set(Constants.IntakeConstants.rightMotorSpeed);
+  public Command setIntakeCommand(double leftSpeed, double rightSpeed) {
+    return Commands.runOnce(() -> {
+      //leftIntakeMotor.set(leftSpeed);
+      //rightIntakeMotor.set(rightSpeed);
     }, this).withName("Set Intake");
   }
 
   public Command getIntakeStopCommand() {
     return Commands.runOnce(() -> {
-      leftIntakeMotor.set(0);
-      rightIntakeMotor.set(0);
+      //leftIntakeMotor.set(0);
+      //rightIntakeMotor.set(0);
     }, this).withName("Stop Intake");
   }
 }

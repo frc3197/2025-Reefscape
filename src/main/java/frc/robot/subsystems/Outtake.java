@@ -7,9 +7,10 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.playingwithfusion.TimeOfFlight;
-import com.playingwithfusion.TimeOfFlight.RangingMode;
 
+import au.grapplerobotics.ConfigurationFailedException;
+import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -19,27 +20,32 @@ import frc.robot.Constants;
 
 public class Outtake extends SubsystemBase {
 
-  private final TimeOfFlight outtakeSensor;
+  //private final TimeOfFlight outtakeSensor;
+
+  private LaserCan outtakeLaserCan;
 
   private final TalonFX outtakeMotor;
 
   private final BooleanSupplier coralBridging;
-  private final BooleanSupplier notCoralBridging;
 
   public Outtake() {
 
-    outtakeSensor = new TimeOfFlight(0);
-    outtakeSensor.setRangingMode(RangingMode.Short, 1);
+    //outtakeSensor = new TimeOfFlight(0);
+    //outtakeSensor.setRangingMode(RangingMode.Short, 1);
+
+    outtakeLaserCan = new LaserCan(Constants.OuttakeConstants.outtakeTimeOfFlightId);
+    try {
+      outtakeLaserCan.setRangingMode(RangingMode.SHORT);
+    } catch (ConfigurationFailedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 
     outtakeMotor = new TalonFX(Constants.OuttakeConstants.outtakeMotorId);
     outtakeMotor.getConfigurator().apply(Constants.OuttakeConstants.outtakeMotorConfig);
 
     coralBridging = () -> {
-      return outtakeSensor.getRange() < Constants.OuttakeConstants.sensorRange;
-    };
-
-    notCoralBridging = () -> {
-      return outtakeSensor.getRange() > Constants.OuttakeConstants.sensorRange;
+      return outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange && outtakeLaserCan.getMeasurement().distance_mm != 0;
     };
 
   }
@@ -47,25 +53,24 @@ public class Outtake extends SubsystemBase {
   @Override
   public void periodic() {
 
-    SmartDashboard.putNumber("ENCODER", outtakeSensor.getRange());
+    SmartDashboard.putNumber("Sensor", outtakeLaserCan.getMeasurement().distance_mm);
 
     SmartDashboard.putBoolean("Not bridging", !coralBridging.getAsBoolean());
 
   }
 
-  public Command feedOuttake1() {
-    return Commands.run(() -> {
-      outtakeMotor.set(Constants.OuttakeConstants.outtakeFeedSpeed);
-    }, this).until(coralBridging).andThen(new WaitCommand(5).until(() -> {
-      return !coralBridging.getAsBoolean();
-    }));
+  public boolean isBridging() {
+    return coralBridging.getAsBoolean();
   }
 
-  public Command feedOuttake2() {
-    return Commands.run(() -> {
-      outtakeMotor.set(Constants.OuttakeConstants.outtakeFeedSpeed);
-    }, this).until(notCoralBridging)
-        .andThen(() -> outtakeMotor.set(0)).withName("Feed Outtake Command");
+  public BooleanSupplier isBridgingSupplier() {
+    return coralBridging;
+  }
+
+  public Command feedOuttake(double speed) {
+    return Commands.runOnce(() -> {
+      outtakeMotor.set(speed);
+    }, this);
   }
 
   public Command spitOuttake() {

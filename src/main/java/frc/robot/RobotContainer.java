@@ -6,19 +6,23 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 
+import java.lang.annotation.Documented;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.enums.LightPattern;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Align;
@@ -28,6 +32,7 @@ import frc.robot.subsystems.Intake;
 import frc.robot.enums.*;
 import frc.robot.managersubsystems.LightManager;
 import frc.robot.managersubsystems.ErrorManager;
+import frc.robot.managersubsystems.AlertManager;
 import frc.robot.subsystems.Outtake;
 import frc.robot.subsystems.Vision;
 import frc.robot.util.*;
@@ -51,6 +56,7 @@ public class RobotContainer {
     // Managers
     private final static LightManager lightManager = new LightManager();
     private final static ErrorManager errorManager = new ErrorManager();
+    private final static AlertManager alertManager = new AlertManager();
 
     // Subsystems
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
@@ -84,8 +90,8 @@ public class RobotContainer {
                                 .withVelocityY(-driverController.getLeftX() * TunerConstants.MaxSpeed) // Drive left
                                                                                                        // with negative
                                                                                                        // X (left)
-                                .withRotationalRate(-driverController.getRightX() * TunerConstants.MaxAngularRate) // Drive
-                                                                                                                   // counterclockwise
+                                .withRotationalRate(driverController.getRightX() * TunerConstants.MaxAngularRate) // Drive
+                                                                                                                  // counterclockwise
                         // with
                         // negative X (left)
                         ));
@@ -98,29 +104,44 @@ public class RobotContainer {
          * -driverController.getLeftX()))));
          */
 
-        //driverController.leftTrigger().onTrue(align.alignReef(AlignRequestType.LeftReefAlign));
-        //driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign));
+        // Align bindings
+
+
+        driverController.leftTrigger().onTrue(Commands.runOnce(() -> {align.alignReef(AlignRequestType.LeftReefAlign);}));
+        driverController.rightTrigger().onTrue(Commands.runOnce(() -> {align.alignReef(AlignRequestType.RightReefAlign);}));
+        //driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign, align::getSection) );
 
         // Elevator bindings
-        driverController.leftTrigger(0.05).whileTrue(elevator.getManualSupplierCommand(driverController::getLeftTriggerAxis))
-                .onFalse(elevator.getManualCommand(0.0));
-        driverController.rightTrigger(0.05).whileTrue(elevator.getManualSupplierCommand(() -> {
-            return -1 * driverController.getRightTriggerAxis();
-        })).onFalse(elevator.getManualCommand(0.0));
 
-        driverController.y().onTrue(elevator.getManualCommand(1)).onFalse(elevator.getManualCommand(0.0)).and(isTestMode());
-        driverController.a().onTrue(elevator.getManualCommand(-0.6)).onFalse(elevator.getManualCommand(0.0)).and(isTestMode());
+        /*
+         * driverController.leftTrigger(0.05)
+         * .whileTrue(elevator.getManualSupplierCommand(driverController::
+         * getLeftTriggerAxis))
+         * .onFalse(elevator.getManualCommand(0.0));
+         * driverController.rightTrigger(0.05).whileTrue(elevator.
+         * getManualSupplierCommand(() -> {
+         * return -1 * driverController.getRightTriggerAxis();
+         * })).onFalse(elevator.getManualCommand(0.0));
+         */
 
-        operatorController.y().onTrue(elevator.setTargetHeightCommand(50));        
-        operatorController.b().onTrue(elevator.setTargetHeightCommand(20));        
-        operatorController.a().onTrue(elevator.setTargetHeightCommand(5));        
+        driverController.y().onTrue(elevator.getManualCommand(1)).onFalse(elevator.getManualCommand(0.0))
+                .and(isTestMode());
+        driverController.a().onTrue(elevator.getManualCommand(-0.6)).onFalse(elevator.getManualCommand(0.0))
+                .and(isTestMode());
+
+        operatorController.y().onTrue(elevator.setTargetHeightCommand(44500));
+        operatorController.b().onTrue(elevator.setTargetHeightCommand(25000));
+        operatorController.a().onTrue(elevator.setTargetHeightCommand(1000));
+
+        operatorController.povUp().onTrue(elevator.setTargetHeightCommand(58000));
+        operatorController.povRight().onTrue(elevator.setTargetHeightCommand(38600));
 
         // Reset encoder
         operatorController.start().onTrue(elevator.getEncoderResetCommand());
 
         // Intake bindings
         driverController.b().onTrue(
-                intake.getIntakeCommand().raceWith(outtake.feedOuttake1().andThen(outtake.feedOuttake2())).andThen(intake.getIntakeStopCommand()));
+                getNewIntakeCommand());
 
         // Outtake bindings
         driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
@@ -190,29 +211,81 @@ public class RobotContainer {
         return false;
     }
 
-    public static void setLightPattern(LightPattern pattern) {
-        lightManager.setLightPattern(pattern);
-    }
-
     public static void addError(ErrorBody error) {
         errorManager.addError(error);
+    }
+
+    public static boolean hasErrors() {
+        return errorManager.hasErrors();
     }
 
     public static boolean hasError(ErrorMode mode) {
         return errorManager.checkForExistingError(mode);
     }
 
+    public static void addAlert(AlertBody alert) {
+        alertManager.addAlert(alert);
+    }
+
+    public static boolean hasAlerts() {
+        return alertManager.hasAlerts();
+    }
+
+    public static boolean hasAlert(AlertMode mode) {
+        return alertManager.checkForExistingAlert(mode);
+    }
+
     public static void setEnabled(boolean value) {
         isEnabled = value;
     }
 
-    private Command runAuto = drivetrain.getAutoPath("Test");
+    public static boolean getEnabled() {
+        return isEnabled;
+    }
+
+    public Command getIntakeCommand() {
+        return new SequentialCommandGroup(
+                intake.setIntakeCommand(0.65, 0.4),
+                outtake.feedOuttake(0.4),
+                Commands.waitUntil(outtake.isBridgingSupplier()),
+                intake.setIntakeCommand(0.3, 0.1),
+                outtake.feedOuttake(0.2),
+                Commands.waitUntil(() -> {
+                    return !outtake.isBridging();
+                }),
+                new InstantCommand(() -> {
+                    if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
+                        RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 1.5));
+                    }
+                }),
+                intake.setIntakeCommand(0, 0),
+                outtake.feedOuttake(0));
+    }
+
+    public Command getNewIntakeCommand() {
+        return new SequentialCommandGroup(
+                outtake.feedOuttake(0.65),
+                Commands.waitUntil(outtake.isBridgingSupplier()),
+                outtake.feedOuttake(0.35),
+                new InstantCommand(() -> {
+                    if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
+                        RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 1.5));
+                    }
+                }),
+                Commands.waitUntil(() -> {
+                    return !outtake.isBridging();
+                }),
+                outtake.feedOuttake(0));
+    }
+
+    private Command runAuto = drivetrain.getAutoPath("Straight");
 
     public Command getAutonomousCommand() {
         CommandScheduler.getInstance().schedule(elevator.getEncoderResetCommand());
 
         return new SequentialCommandGroup(
                 drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
+                drivetrain.runOnce(() -> drivetrain.resetNewPose(new Pose2d(2, 6, new Rotation2d(0)))),
                 runAuto);
     }
 }

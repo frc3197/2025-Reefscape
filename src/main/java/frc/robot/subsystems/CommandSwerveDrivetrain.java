@@ -2,7 +2,10 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.io.IOException;
 import java.util.function.Supplier;
+
+import org.json.simple.parser.ParseException;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -16,6 +19,8 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FileVersionException;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -34,6 +39,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -63,7 +69,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     // Pose estimator standard deviations
     private static final edu.wpi.first.math.Vector<N3> newStateStdDevs = VecBuilder.fill(0.025, 0.025,
             Units.degreesToRadians(0.05));
-    private static final edu.wpi.first.math.Vector<N3> newVisionMeasurementStdDevs = VecBuilder.fill(2, 2,
+    private static final edu.wpi.first.math.Vector<N3> newVisionMeasurementStdDevs = VecBuilder.fill(0.1, 0.1,
             Units.degreesToRadians(0.5));
 
     // Pose estimator, field image
@@ -182,7 +188,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this::getNewCurrentPose, // Robot pose supplier
                 this::resetNewPose, // Method to reset odometry (will be called if your auto has a starting pose)
                 this::getCurrentRobotChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                (speeds, feedforwards) -> this.setControl(AutoRequest.withSpeeds(speeds)), // Method that will drive the
+                (speeds, feedforwards) -> this.setControl(AutoRequest.withSpeeds( new ChassisSpeeds(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, -speeds.omegaRadiansPerSecond) )), // Method that will drive the
                                                                                            // robot given ROBOT RELATIVE
                                                                                            // ChassisSpeeds. Also
                                                                                            // optionally outputs
@@ -190,8 +196,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                                                                            // feedforwards
                 new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
                                                 // holonomic drive trains
-                        new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                        new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+                        new PIDConstants(1, 0.0, 0.0), // Translation PID constants
+                        new PIDConstants(0.5, 0.0, 0.2) // Rotation PID constants
+                        
                 ),
                 config, // The robot configuration
                 () -> {
@@ -208,11 +215,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 },
                 this // Reference to this subsystem to set requirements
         );
+
     }
 
     public ChassisSpeeds getCurrentRobotChassisSpeeds() {
-        return new ChassisSpeeds(this.getState().Speeds.vxMetersPerSecond, this.getState().Speeds.vyMetersPerSecond,
-                this.getState().Speeds.omegaRadiansPerSecond);
+        return getKinematics().toChassisSpeeds(getState().ModuleStates);
     }
 
     public boolean flip() {
@@ -229,7 +236,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // Returns pose estimator pose
     public Pose2d getNewCurrentPose() {
-        return newPoseEstimator.getEstimatedPosition();
+        return new Pose2d(newPoseEstimator.getEstimatedPosition().getX(), newPoseEstimator.getEstimatedPosition().getY(), newPoseEstimator.getEstimatedPosition().getRotation());
     }
 
     // Resets pose estimator pose
@@ -322,7 +329,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         m_poseArray[0] = poseWithVision.getX();
         m_poseArray[1] = poseWithVision.getY();
-        m_poseArray[2] = poseWithVision.getRotation().getDegrees();
+        m_poseArray[2] = getNewCurrentPose().getRotation().getDegrees();
 
         SmartDashboard.putNumberArray("PoseWithVision", m_poseArray);
 
@@ -360,22 +367,40 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return new PathPlannerAuto(pathName);
     }
 
-    public Command pathFind(Pose2d targetPose) {
+    public Command alignReef(String pathName) {
         // Since we are using a holonomic drivetrain, the rotation component of this
         // pose
         // represents the goal holonomic rotation
 
+        Command tempCommand = null;
+        try {
+            tempCommand = AutoBuilder.followPath(PathPlannerPath.fromPathFile(pathName));
+        } catch (FileVersionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return tempCommand;
+
+        
+
         // Create the constraints to use while pathfinding
-        PathConstraints constraints = new PathConstraints(
-                2.0, 2.0,
-                Units.degreesToRadians(540), Units.degreesToRadians(720));
+        //PathConstraints constraints = new PathConstraints(
+                //2.5, 3.0,
+                //Units.degreesToRadians(540), Units.degreesToRadians(720));
 
         // Since AutoBuilder is configured, we can use it to build pathfinding commands
-        return AutoBuilder.pathfindToPose(
-                targetPose,
-                constraints,
-                0.0 // Goal end velocity in meters/sec
-        );
+        //return AutoBuilder.pathfindToPose(
+               // targetPose.get(),
+               // constraints,
+                //1.0 // Goal end velocity in meters/sec
+        //);
     }
 
 }

@@ -4,11 +4,6 @@
 
 package frc.robot.enums;
 
-/** Add your docs here. */
-public enum LightPattern {
-    IdleAlliance,
-    IdleOrange,
-    Autonomous,
-    NotZeroed,
-    Tele
+public enum AlertMode {
+    ACQUIRED_CORAL
 }
