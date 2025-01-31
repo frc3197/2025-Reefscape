@@ -5,5 +5,6 @@
 package frc.robot.enums;
 
 public enum AlertMode {
-    ACQUIRED_CORAL
+    ACQUIRED_CORAL,
+    ACQUIRED_ALGAE
 }

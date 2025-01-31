@@ -8,7 +8,6 @@ import java.util.function.BooleanSupplier;
 
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.enums.*;
-import frc.robot.util.*;
 
 /** Add your docs here. */
 public class AlertBody {

@@ -12,7 +12,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -62,7 +61,7 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elevator encoder", readEncoder());
     SmartDashboard.putNumber("Elevator height", getElevatorHeight());
 
-    if (!RobotContainer.isTestMode().getAsBoolean() && false) {
+    if (!RobotContainer.isTestMode().getAsBoolean() && true) {
 
       double calculatedSpeed = testPID.calculate((getElevatorHeight() - targetHeight)/1000);
       double feedSpeed = elevatorFeedforward.calculate(leftMotor.get() / 10);

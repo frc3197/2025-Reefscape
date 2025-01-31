@@ -106,10 +106,16 @@ public class RobotContainer {
 
         // Align bindings
 
-
-        driverController.leftTrigger().onTrue(Commands.runOnce(() -> {align.alignReef(AlignRequestType.LeftReefAlign);}));
-        driverController.rightTrigger().onTrue(Commands.runOnce(() -> {align.alignReef(AlignRequestType.RightReefAlign);}));
-        //driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign, align::getSection) );
+        /*
+        driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
+            align.alignReef(AlignRequestType.LeftReefAlign);
+        }));
+        driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
+            align.alignReef(AlignRequestType.RightReefAlign);
+        }));
+        */
+        // driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign,
+        // align::getSection) );
 
         // Elevator bindings
 
@@ -124,14 +130,20 @@ public class RobotContainer {
          * })).onFalse(elevator.getManualCommand(0.0));
          */
 
-        driverController.y().onTrue(elevator.getManualCommand(1)).onFalse(elevator.getManualCommand(0.0))
-                .and(isTestMode());
-        driverController.a().onTrue(elevator.getManualCommand(-0.6)).onFalse(elevator.getManualCommand(0.0))
-                .and(isTestMode());
+        /*
+         * driverController.y().onTrue(elevator.getManualCommand(1)).onFalse(elevator.
+         * getManualCommand(0.0))
+         * .and(isTestMode());
+         * driverController.a().onTrue(elevator.getManualCommand(-0.6)).onFalse(elevator
+         * .getManualCommand(0.0))
+         * .and(isTestMode());
+         */
 
-        operatorController.y().onTrue(elevator.setTargetHeightCommand(44500));
-        operatorController.b().onTrue(elevator.setTargetHeightCommand(25000));
-        operatorController.a().onTrue(elevator.setTargetHeightCommand(1000));
+        operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder));
+        operatorController.y().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder));
+        operatorController.b().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder));
+        operatorController.a()
+                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
 
         operatorController.povUp().onTrue(elevator.setTargetHeightCommand(58000));
         operatorController.povRight().onTrue(elevator.setTargetHeightCommand(38600));
@@ -147,8 +159,14 @@ public class RobotContainer {
         driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
 
         // Algae bindings
-        driverController.leftBumper().onTrue(algae.setAlgaeGrabbers(0.5)).onFalse(algae.setAlgaeGrabbers(0));
-        driverController.rightBumper().onTrue(algae.setAlgaeGrabbers(-0.5)).onFalse(algae.setAlgaeGrabbers(0));
+        driverController.leftBumper().onTrue(algae.setAlgaeGrabbers(0.85)).onFalse(algae.setAlgaeGrabbers(0));
+        driverController.rightBumper().onTrue(algae.setAlgaeGrabbers(-1.0)).onFalse(algae.setAlgaeGrabbers(0));
+
+        //driverController.y().onTrue(algae.setDeploySpeed(0.3)).onFalse(algae.setDeploySpeed(0.0));
+        //driverController.a().onTrue(algae.setDeploySpeed(-0.3)).onFalse(algae.setDeploySpeed(0.0));
+        
+        driverController.y().onTrue(algae.setTargetAngle(0.25));
+        driverController.a().onTrue(algae.setTargetAngle(0.41));
 
         /*
          * // Run SysId routines when holding back/start and X/Y.
@@ -246,10 +264,10 @@ public class RobotContainer {
     public Command getIntakeCommand() {
         return new SequentialCommandGroup(
                 intake.setIntakeCommand(0.65, 0.4),
-                outtake.feedOuttake(0.4),
+                outtake.feedOuttake(0.1),
                 Commands.waitUntil(outtake.isBridgingSupplier()),
                 intake.setIntakeCommand(0.3, 0.1),
-                outtake.feedOuttake(0.2),
+                outtake.feedOuttake(0.05),
                 Commands.waitUntil(() -> {
                     return !outtake.isBridging();
                 }),
@@ -259,23 +277,27 @@ public class RobotContainer {
                     }
                 }),
                 intake.setIntakeCommand(0, 0),
-                outtake.feedOuttake(0));
+                outtake.feedOuttake(-0.1),
+                new WaitCommand(0.15));
     }
 
     public Command getNewIntakeCommand() {
         return new SequentialCommandGroup(
-                outtake.feedOuttake(0.65),
+                outtake.feedOuttake(0.5),
                 Commands.waitUntil(outtake.isBridgingSupplier()),
-                outtake.feedOuttake(0.35),
+                outtake.feedOuttake(0.2),
+                Commands.waitUntil(() -> {
+                    return !outtake.isBridging();
+                }),
                 new InstantCommand(() -> {
                     if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
                         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 1.5));
                     }
                 }),
-                Commands.waitUntil(() -> {
-                    return !outtake.isBridging();
-                }),
-                outtake.feedOuttake(0));
+                outtake.feedOuttake(-0.1),
+                new WaitCommand(0.1),
+                outtake.feedOuttake(0.0)
+                );
     }
 
     private Command runAuto = drivetrain.getAutoPath("Straight");

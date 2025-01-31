@@ -4,20 +4,11 @@
 
 package frc.robot.subsystems;
 
-import java.io.IOException;
-import java.util.function.Supplier;
-
-import org.json.simple.parser.ParseException;
-
-import com.pathplanner.lib.util.FileVersionException;
-
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.enums.AlignRequestType;
 
@@ -27,15 +18,11 @@ public class Align extends SubsystemBase {
 
   private CommandSwerveDrivetrain drive;
 
-  private Supplier<Integer> sectionSupplier;
-
   private Command leftAlignCommand;
   private Command rightAlignCommand;
 
   public Align(CommandSwerveDrivetrain drive) {
     this.drive = drive;
-
-    sectionSupplier = this::getSection;
 
     setAlignCommands();
   }

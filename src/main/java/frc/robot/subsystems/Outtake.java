@@ -8,9 +8,7 @@ import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import au.grapplerobotics.ConfigurationFailedException;
 import au.grapplerobotics.LaserCan;
-import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -20,32 +18,19 @@ import frc.robot.Constants;
 
 public class Outtake extends SubsystemBase {
 
-  //private final TimeOfFlight outtakeSensor;
-
   private LaserCan outtakeLaserCan;
-
   private final TalonFX outtakeMotor;
-
   private final BooleanSupplier coralBridging;
 
   public Outtake() {
 
-    //outtakeSensor = new TimeOfFlight(0);
-    //outtakeSensor.setRangingMode(RangingMode.Short, 1);
-
-    outtakeLaserCan = new LaserCan(Constants.OuttakeConstants.outtakeTimeOfFlightId);
-    try {
-      outtakeLaserCan.setRangingMode(RangingMode.SHORT);
-    } catch (ConfigurationFailedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    outtakeLaserCan = new LaserCan(Constants.OuttakeConstants.outtakeLaserCan);
 
     outtakeMotor = new TalonFX(Constants.OuttakeConstants.outtakeMotorId);
     outtakeMotor.getConfigurator().apply(Constants.OuttakeConstants.outtakeMotorConfig);
 
     coralBridging = () -> {
-      return outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange && outtakeLaserCan.getMeasurement().distance_mm != 0;
+      return outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange;
     };
 
   }

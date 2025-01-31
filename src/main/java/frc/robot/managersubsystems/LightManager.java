@@ -68,10 +68,19 @@ public class LightManager extends SubsystemBase {
   }
 
   private void checkAlertLights() {
-    if (RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
-      patternSetAcquiredCoralAlert();
+
+    if(!RobotContainer.getEnabled()) {
+      return;
     }
 
+    if (RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
+      patternSetAcquiredCoralAlert();
+      return;
+    }
+    if(RobotContainer.hasAlert(AlertMode.ACQUIRED_ALGAE)) {
+      patternSetAcquiredAlgaeAlert();
+      return;
+    }
   }
 
   // Actual light patterns
@@ -117,6 +126,21 @@ public class LightManager extends SubsystemBase {
       for (int i = 0; i < buffer.getLength(); i++) {
         // Sets the specified LED to the GRB values for red
         buffer.setRGB(i, 255, 0, 0);
+      }
+    else {
+      for (int i = 0; i < buffer.getLength(); i++) {
+        // Sets the specified LED to the GRB values for red
+        buffer.setRGB(i, 0, 0, 0);
+      }
+    }
+    led.setData(buffer);
+  }
+
+  private void patternSetAcquiredAlgaeAlert() {
+    if (Timer.getTimestamp() % 0.12 <= 0.06)
+      for (int i = 0; i < buffer.getLength(); i++) {
+        // Sets the specified LED to the GRB values for red
+        buffer.setRGB(i, 255, 0, 200);
       }
     else {
       for (int i = 0; i < buffer.getLength(); i++) {

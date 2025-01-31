@@ -4,6 +4,7 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -79,11 +80,11 @@ public class Constants {
 		public static final int elevatorLowHeight = 30;
 		public static final int elevatorHighHeight = 200;
 
-		public static final int loadingStationEncoder = 2500;
-		public static final int level1Encoder = 1000;
+		public static final int loadingStationEncoder = 100;
+		public static final int level1Encoder = 2500;
 		public static final int level2Encoder = 25000;
 		public static final int level3Encoder = 44500;
-		public static final int level4Encoder = 13500;
+		public static final int level4Encoder = 68250;
 	}
 
 	public static class AlgaeConstants {
@@ -93,37 +94,24 @@ public class Constants {
 		public static final int leftGrabberMotorId = 15;
 		public static final int rightGrabberMotorId = 16;
 
+		public static final int algaeLaserCanId = 1;
+		public static final double algaeSensorDistance = 15;
+
 		public static final TalonFXConfiguration deployMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(20))
+						.withStatorCurrentLimit(Amps.of(110))
 						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(20))
+						.withSupplyCurrentLimit(Amps.of(110))
 						.withSupplyCurrentLimitEnable(true))
 				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
-		public static final TalonFXConfiguration spinMotorConfig = new TalonFXConfiguration().withCurrentLimits(
-				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(20))
-						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(20))
-						.withSupplyCurrentLimitEnable(true))
-				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+		public static final int algaeEncoderChannel = 3;
 
-		public static final TalonFXConfiguration leftGrabberMotorConfig = new TalonFXConfiguration().withCurrentLimits(
-				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(20))
-						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(20))
-						.withSupplyCurrentLimitEnable(true))
-				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
-
-		public static final TalonFXConfiguration rightGrabberMotorConfig = new TalonFXConfiguration().withCurrentLimits(
-				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(20))
-						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(20))
-						.withSupplyCurrentLimitEnable(true))
-				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+		// 0 degrees
+		public static double algaeDownEncoder = 0.448;
+		
+		// 90 degrees
+		public static double algaeUpEncoder = 0.185;
 	}
 
 	public static class IntakeConstants {
@@ -155,9 +143,9 @@ public class Constants {
 
 	public static class OuttakeConstants {
 		public static final int outtakeMotorId = 14;
-		public static final int outtakeTimeOfFlightId = 0;
+		public static final int outtakeLaserCan = 0;
 
-		public static final double sensorRange = 140;
+		public static final double sensorRange = 100;
 
 		public static final double outtakeFeedSpeed = 0.25;
 		public static final double outtakeSpitSpeed = 1;
