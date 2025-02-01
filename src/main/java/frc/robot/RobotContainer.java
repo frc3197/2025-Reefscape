@@ -28,7 +28,6 @@ import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Align;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Intake;
 import frc.robot.enums.*;
 import frc.robot.managersubsystems.LightManager;
 import frc.robot.managersubsystems.ErrorManager;
@@ -63,7 +62,6 @@ public class RobotContainer {
     private final Vision poseEstimator = new Vision(drivetrain);
     private final Align align = new Align(drivetrain);
     private final Elevator elevator = new Elevator();
-    private final Intake intake = new Intake();
     private final Outtake outtake = new Outtake();
     private final Algae algae = new Algae();
 
@@ -73,7 +71,8 @@ public class RobotContainer {
 
     private final static CommandXboxController[] controllers = { driverController, operatorController };
 
-    public static boolean isEnabled = false;
+    private static boolean isEnabled = false;
+    private static boolean isTestMode = false;
 
     public RobotContainer() {
         configureBindings();
@@ -107,13 +106,13 @@ public class RobotContainer {
         // Align bindings
 
         /*
-        driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
-            align.alignReef(AlignRequestType.LeftReefAlign);
-        }));
-        driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
-            align.alignReef(AlignRequestType.RightReefAlign);
-        }));
-        */
+         * driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
+         * align.alignReef(AlignRequestType.LeftReefAlign);
+         * }));
+         * driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
+         * align.alignReef(AlignRequestType.RightReefAlign);
+         * }));
+         */
         // driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign,
         // align::getSection) );
 
@@ -162,9 +161,9 @@ public class RobotContainer {
         driverController.leftBumper().onTrue(algae.setAlgaeGrabbers(0.85)).onFalse(algae.setAlgaeGrabbers(0));
         driverController.rightBumper().onTrue(algae.setAlgaeGrabbers(-1.0)).onFalse(algae.setAlgaeGrabbers(0));
 
-        //driverController.y().onTrue(algae.setDeploySpeed(0.3)).onFalse(algae.setDeploySpeed(0.0));
-        //driverController.a().onTrue(algae.setDeploySpeed(-0.3)).onFalse(algae.setDeploySpeed(0.0));
-        
+        // driverController.y().onTrue(algae.setDeploySpeed(0.3)).onFalse(algae.setDeploySpeed(0.0));
+        // driverController.a().onTrue(algae.setDeploySpeed(-0.3)).onFalse(algae.setDeploySpeed(0.0));
+
         driverController.y().onTrue(algae.setTargetAngle(0.25));
         driverController.povRight().onTrue(algae.setTargetAngle(0.41));
         driverController.a().onTrue(algae.setTargetAngle(0.47));
@@ -262,6 +261,14 @@ public class RobotContainer {
         return isEnabled;
     }
 
+    public static void setTestMode(boolean value) {
+        isEnabled = value;
+    }
+
+    public static boolean getTestMode() {
+        return isEnabled;
+    }
+
     public Command getIntakeCommand() {
         return new SequentialCommandGroup(
                 outtake.feedOuttake(0.5),
@@ -277,11 +284,10 @@ public class RobotContainer {
                 }),
                 outtake.feedOuttake(-0.1),
                 new WaitCommand(0.1),
-                outtake.feedOuttake(0.0)
-                );
+                outtake.feedOuttake(0.0));
     }
 
-    private Command runAuto = drivetrain.getAutoPath("Straight");
+    private Command autoCommand = drivetrain.getAutoPath("Straight");
 
     public Command getAutonomousCommand() {
         CommandScheduler.getInstance().schedule(elevator.getEncoderResetCommand());
@@ -289,6 +295,6 @@ public class RobotContainer {
         return new SequentialCommandGroup(
                 drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
                 drivetrain.runOnce(() -> drivetrain.resetNewPose(new Pose2d(2, 6, new Rotation2d(0)))),
-                runAuto);
+                autoCommand);
     }
 }

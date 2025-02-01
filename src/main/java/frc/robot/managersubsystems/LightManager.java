@@ -15,18 +15,18 @@ import frc.robot.enums.AlertMode;
 
 public class LightManager extends SubsystemBase {
 
-  private AddressableLED led;
-  private AddressableLEDBuffer buffer;
+  private final AddressableLED led;
+  private final AddressableLEDBuffer buffer;
 
   public LightManager() {
 
-    led = new AddressableLED(1);
-    buffer = new AddressableLEDBuffer(60 + 102);
-    led.setLength(buffer.getLength());
+    this.led = new AddressableLED(1);
+    this.buffer = new AddressableLEDBuffer(60 + 102);
+    this.led.setLength(buffer.getLength());
 
     // Set the data
-    led.setData(buffer);
-    led.start();
+    this.led.setData(buffer);
+    this.led.start();
   }
 
   @Override
@@ -55,8 +55,9 @@ public class LightManager extends SubsystemBase {
     turnOffLights();
   }
 
+  // --------------------------------------------------------------------
   // Further logic to distinguish between priority levels
-  // --------------------------------------------------------------
+  // --------------------------------------------------------------------
 
   // Check error status
   private void checkErrorLights() {
@@ -86,9 +87,9 @@ public class LightManager extends SubsystemBase {
     }
   }
 
-  // -------------------------------------------------------------------
+  // --------------------------------------------------------------------
   // ERROR PATTERNS
-  // -------------------------------------------------------------------
+  // --------------------------------------------------------------------
 
   // Elevator error
   private void patternSetElevatorError() {

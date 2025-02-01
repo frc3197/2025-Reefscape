@@ -35,6 +35,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     RobotContainer.setEnabled(true);
+    RobotContainer.setTestMode(false);
 
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -48,11 +49,13 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousExit() {
+    RobotContainer.setTestMode(false);
     RobotContainer.setEnabled(false);
   }
 
   @Override
   public void teleopInit() {
+    RobotContainer.setTestMode(false);
     RobotContainer.setEnabled(true);
 
     if (m_autonomousCommand != null) {
@@ -65,11 +68,14 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopExit() {
+    RobotContainer.setTestMode(false);
     RobotContainer.setEnabled(false);
   }
 
   @Override
   public void testInit() {
+    RobotContainer.setTestMode(true);
+    RobotContainer.setEnabled(true);
     CommandScheduler.getInstance().cancelAll();
   }
 
@@ -77,7 +83,10 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {}
 
   @Override
-  public void testExit() {}
+  public void testExit() {
+    RobotContainer.setTestMode(false);
+    RobotContainer.setEnabled(false);
+  }
 
   @Override
   public void simulationPeriodic() {}

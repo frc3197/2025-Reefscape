@@ -25,67 +25,66 @@ import frc.robot.util.ErrorBody;
 
 public class Elevator extends SubsystemBase {
 
+  // Elevation motors
   private final TalonFX leftMotor;
   private final TalonFX rightMotor;
 
+  // Elevation height encoder
   private final Encoder elevatorEncoder;
 
+  // Elevator
   private ElevatorFeedforward elevatorFeedforward;
   private final PIDController testPID;
 
-  private double targetHeight = 0;
+  // Target elevation height
+  private double targetHeightTicks = 0;
 
   public Elevator() {
-    leftMotor = new TalonFX(Constants.ElevatorConstants.leftElevatorMotorId);
-    rightMotor = new TalonFX(Constants.ElevatorConstants.rightElevatorMotorId);
 
-    leftMotor.getConfigurator().apply(Constants.ElevatorConstants.leftElevatorMotorConfig);
-    rightMotor.getConfigurator().apply(Constants.ElevatorConstants.rightElevatorMotorConfig);
+    this.leftMotor = new TalonFX(Constants.ElevatorConstants.leftElevatorMotorId);
+    this.rightMotor = new TalonFX(Constants.ElevatorConstants.rightElevatorMotorId);
 
-    leftMotor.setNeutralMode(NeutralModeValue.Brake);
-    rightMotor.setNeutralMode(NeutralModeValue.Brake);
+    this.leftMotor.getConfigurator().apply(Constants.ElevatorConstants.leftElevatorMotorConfig);
+    this.rightMotor.getConfigurator().apply(Constants.ElevatorConstants.rightElevatorMotorConfig);
 
-    elevatorEncoder = new Encoder(Constants.ElevatorConstants.elevatorEncoderChannelA,
+    this.leftMotor.setNeutralMode(NeutralModeValue.Brake);
+    this.rightMotor.setNeutralMode(NeutralModeValue.Brake);
+
+    this.elevatorEncoder = new Encoder(Constants.ElevatorConstants.elevatorEncoderChannelA,
         Constants.ElevatorConstants.elevatorEncoderChannelB);
 
-    elevatorFeedforward = Constants.ElevatorConstants.lightLoadElevatorFeed;
-    testPID = Constants.ElevatorConstants.lightLoadElevatorPID;
+    this.elevatorFeedforward = Constants.ElevatorConstants.lightLoadElevatorFeed;
+    this.testPID = Constants.ElevatorConstants.lightLoadElevatorPID;
 
-    elevatorEncoder.setReverseDirection(true);
-    elevatorEncoder.reset();
+    this.elevatorEncoder.setReverseDirection(true);
+    this.elevatorEncoder.reset();
+
   }
 
   @Override
   public void periodic() {
 
     SmartDashboard.putNumber("Elevator encoder", readEncoder());
-    SmartDashboard.putNumber("Elevator height", getElevatorHeight());
 
     if (!RobotContainer.isTestMode().getAsBoolean() && true) {
 
-      double calculatedSpeed = testPID.calculate((getElevatorHeight() - targetHeight)/1000);
+      double calculatedSpeed = testPID.calculate((readEncoder() - targetHeightTicks) / 1000);
       double feedSpeed = elevatorFeedforward.calculate(leftMotor.get() / 10);
 
       SmartDashboard.putNumber("Elevator PID calc", calculatedSpeed);
       SmartDashboard.putNumber("Feed Elevator Calculation", feedSpeed);
 
-      double finalSpeed = MathUtil.clamp(calculatedSpeed, -0.95, 0.95);
+      double finalSpeed = MathUtil.clamp(calculatedSpeed, -0.85, 0.95);
 
       leftMotor.set(finalSpeed);
       rightMotor.set(finalSpeed);
     }
 
-    // Check for elevator errors
-    if (readEncoder() < -100) {
-      if (!RobotContainer.hasError(ErrorMode.ELEVATOR_REQUIRES_ZERO)) {
-        RobotContainer.addError(new ErrorBody(ErrorMode.ELEVATOR_REQUIRES_ZERO, () -> {
-          return readEncoder() > -100;
-        }));
-      }
-    }
+    checkError();
 
   }
 
+  // Manually set elevator speed with constant
   public InstantCommand getManualCommand(double speed) {
     return new InstantCommand(() -> {
       leftMotor.set(speed);
@@ -93,38 +92,50 @@ public class Elevator extends SubsystemBase {
     });
   }
 
-  public Command getManualSupplierCommand(DoubleSupplier speedSupplier) {
+  // Manually set elevator speed with supplier
+  public Command getManualCommand(DoubleSupplier speedSupplier) {
     return Commands.run(() -> {
       leftMotor.set(speedSupplier.getAsDouble());
       rightMotor.set(speedSupplier.getAsDouble());
     });
   }
 
+  // Retrieve raw encoder ticks
   public double readEncoder() {
     return elevatorEncoder.getRaw();
   }
 
+  // Zero encoder
   private void resetEncoder() {
     elevatorEncoder.reset();
   }
 
+  // Zero encoder command
   public Command getEncoderResetCommand() {
     return Commands.runOnce(this::resetEncoder);
   }
 
-  public double getElevatorHeight() {
-    return ((readEncoder() / Constants.ElevatorConstants.encoderHighValue)
-        * (Constants.ElevatorConstants.elevatorHighHeight - Constants.ElevatorConstants.elevatorLowHeight))
-        + Constants.ElevatorConstants.elevatorLowHeight;
+  // Setter for target height
+  private void setTargetHeight(double value) {
+    targetHeightTicks = value;
   }
 
-  public void setTargetHeight(double value) {
-    targetHeight = value;
-  }
-
+  // Set target height in encoder ticks
   public Command setTargetHeightCommand(double value) {
     return Commands.runOnce(() -> {
       setTargetHeight(value);
     });
+  }
+
+  // Check for elevator error
+  private void checkError() {
+    // If elevator is below height 100, send error status
+    if (readEncoder() < -100) {
+      if (!RobotContainer.hasError(ErrorMode.ELEVATOR_REQUIRES_ZERO)) {
+        RobotContainer.addError(new ErrorBody(ErrorMode.ELEVATOR_REQUIRES_ZERO, () -> {
+          return readEncoder() > -100;
+        }));
+      }
+    }
   }
 }
