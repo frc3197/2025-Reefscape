@@ -73,6 +73,7 @@ public class RobotContainer {
 
     private static boolean isEnabled = false;
     private static boolean isTestMode = false;
+    private static boolean hasAlgae = false;
 
     public RobotContainer() {
         configureBindings();
@@ -158,15 +159,15 @@ public class RobotContainer {
         driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
 
         // Algae bindings
-        driverController.leftBumper().onTrue(algae.setAlgaeGrabbers(0.85)).onFalse(algae.setAlgaeGrabbers(0));
-        driverController.rightBumper().onTrue(algae.setAlgaeGrabbers(-1.0)).onFalse(algae.setAlgaeGrabbers(0));
+        driverController.leftBumper().onTrue(algae.setAlgaeGrabberSpeedCommand(0.85)).onFalse(algae.setAlgaeGrabberSpeedCommand(0));
+        driverController.rightBumper().onTrue(algae.setAlgaeGrabberSpeedCommand(-1.0)).onFalse(algae.setAlgaeGrabberSpeedCommand(0));
 
         // driverController.y().onTrue(algae.setDeploySpeed(0.3)).onFalse(algae.setDeploySpeed(0.0));
         // driverController.a().onTrue(algae.setDeploySpeed(-0.3)).onFalse(algae.setDeploySpeed(0.0));
 
-        driverController.y().onTrue(algae.setTargetAngle(0.25));
-        driverController.povRight().onTrue(algae.setTargetAngle(0.41));
-        driverController.a().onTrue(algae.setTargetAngle(0.47));
+        driverController.y().onTrue(algae.setTargetAngleDegrees(80));
+        driverController.povRight().onTrue(algae.setTargetAngleDegrees(10));
+        driverController.a().onTrue(algae.setTargetAngleDegrees(-15));
 
         /*
          * // Run SysId routines when holding back/start and X/Y.
@@ -203,10 +204,6 @@ public class RobotContainer {
 
     public static double getDriveControllerLeftDistance() {
         return Math.sqrt(Math.pow(driverController.getLeftX(), 2) + Math.pow(driverController.getLeftY(), 2));
-    }
-
-    public static BooleanSupplier isTestMode() {
-        return DriverStation::isTestEnabled;
     }
 
     public static void addRumble(int controller, double value, double time, RumbleType type) {
@@ -267,6 +264,14 @@ public class RobotContainer {
 
     public static boolean getTestMode() {
         return isEnabled;
+    }
+
+    public static void setHasAlgae(boolean value) {
+        hasAlgae = value;
+    }
+
+    public static boolean getHasAlgae() {
+        return hasAlgae;
     }
 
     public Command getIntakeCommand() {

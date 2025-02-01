@@ -1,55 +1,27 @@
 package frc.robot;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 
 import static edu.wpi.first.units.Units.*;
 
 public class Constants {
-	public static Pose2d[][] RedAlignPositions = {
-
-			// Front Right: ZERO
-			{
-					// Left
-					new Pose2d(13.92, 5.12, new Rotation2d(Units.degreesToRadians(-60))),
-
-					// Right
-					new Pose2d(13.59, 5.26, new Rotation2d(Units.degreesToRadians(-60)))
-			},
-
-			// Front middle: ONE
-			{
-					// Left
-					new Pose2d(14.25, 3.75, new Rotation2d(Units.degreesToRadians(180))),
-
-					// Right
-					new Pose2d(14.25, 4.23, new Rotation2d(Units.degreesToRadians(180)))
-			},
-
-			// Back Right: FIVE
-			{
-					// Left
-					new Pose2d(12.15, 5.12, new Rotation2d(Units.degreesToRadians(60))),
-
-					// Right
-					new Pose2d(12.49, 5.22, new Rotation2d(Units.degreesToRadians(60)))
-			}
-	};
 
 	public static class ElevatorConstants {
 		public static final int leftElevatorMotorId = 8;
 		public static final int rightElevatorMotorId = 9;
 
-		public static final ElevatorFeedforward lightLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
-		public static final PIDController lightLoadElevatorPID = new PIDController(0.2, 0, 0);
+		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
+		public static final ElevatorFeedforward algaeLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
+		public static final PIDController emptyLoadElevatorPID = new PIDController(0.2, 0, 0);
+		public static final PIDController algaeLoadElevatorPID = new PIDController(0.2, 0, 0);
 
 		public static final TalonFXConfiguration leftElevatorMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()
@@ -102,15 +74,23 @@ public class Constants {
 						.withStatorCurrentLimitEnable(true)
 						.withSupplyCurrentLimit(Amps.of(110))
 						.withSupplyCurrentLimitEnable(true))
-				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
+				.withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(30));
+		// Check gear ratio for deploy motor
 
 		public static final int algaeEncoderChannel = 3;
 
 		// 0 degrees
 		public static double algaeDownEncoder = 0.448;
-		
+
 		// 90 degrees
 		public static double algaeUpEncoder = 0.185;
+
+		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
+		public static ArmFeedforward algaeLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
+
+		public static PIDController emptyLoadArmPID = new PIDController(0, 0, 0);
+		public static PIDController algaeLoadArmPID = new PIDController(0, 0, 0);
 	}
 
 	public static class IntakeConstants {

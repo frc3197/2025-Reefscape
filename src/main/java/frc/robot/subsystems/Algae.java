@@ -17,7 +17,9 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,23 +30,34 @@ import frc.robot.RobotContainer;
 import frc.robot.enums.AlertMode;
 import frc.robot.util.AlertBody;
 
+@SuppressWarnings("unused")
 public class Algae extends SubsystemBase {
 
+  // Deploy motor
   private final TalonFX deployMotor;
 
+  // Grabber motors
   private final SparkMax leftGrabberMotor;
   private final SparkMax rightGrabberMotor;
 
+  // Grabber configs
+  private final SparkMaxConfig leftConfig;
+  private final SparkMaxConfig rightConfig;
+
+  // Algae detection sensor
   private final LaserCan algaeLaserCan;
 
-  private SparkMaxConfig leftConfig;
-  private SparkMaxConfig rightConfig;
-
+  // Sensor detects algae
   private boolean hasAlgae = false;
 
+  // Algae encoder
   private final DutyCycleEncoder algaeEncoder;
 
-  private final PIDController algaeArmPID = new PIDController(1, 0, 0);
+  // PID and feed forward
+  private final PIDController emptyArmPID;
+  private final ArmFeedforward emptyArmFeedForward;
+  private final PIDController algaeArmPID;
+  private final ArmFeedforward algaeArmFeedForward;
   private double targetAlgaeAngle = 0.3;
 
   public Algae() {
@@ -56,12 +69,14 @@ public class Algae extends SubsystemBase {
     this.leftGrabberMotor = new SparkMax(Constants.AlgaeConstants.leftGrabberMotorId, MotorType.kBrushless);
     this.rightGrabberMotor = new SparkMax(Constants.AlgaeConstants.rightGrabberMotorId, MotorType.kBrushless);
 
+    // Configuration for spark maxes
     this.leftConfig = new SparkMaxConfig();
     this.leftConfig.smartCurrentLimit(20, 20);
     this.leftConfig.inverted(false);
     this.leftConfig.idleMode(IdleMode.kBrake);
     this.leftGrabberMotor.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
+    // Configuration for spark maxes
     this.rightConfig = new SparkMaxConfig();
     this.rightConfig.smartCurrentLimit(20, 20);
     this.rightConfig.inverted(true);
@@ -69,24 +84,32 @@ public class Algae extends SubsystemBase {
     this.rightGrabberMotor.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     this.algaeLaserCan = new LaserCan(Constants.AlgaeConstants.algaeLaserCanId);
-
     this.algaeEncoder = new DutyCycleEncoder(Constants.AlgaeConstants.algaeEncoderChannel);
+
+    this.emptyArmFeedForward = Constants.AlgaeConstants.emptyLoadArmFeedForward;
+    this.algaeArmFeedForward = Constants.AlgaeConstants.algaeLoadArmFeedForward;
+
+    this.emptyArmPID = Constants.AlgaeConstants.emptyLoadArmPID;
+    this.algaeArmPID = Constants.AlgaeConstants.algaeLoadArmPID;
+
   }
 
-  public Command setTargetAngle(double angle) {
+  public Command setTargetAngleDegrees(double angleDegrees) {
     return Commands.runOnce(() -> {
-      this.targetAlgaeAngle = angle;
+      this.targetAlgaeAngle = convertTicksToDegrees(angleDegrees);
     });
   }
 
-  public Command setAlgaeGrabbers(double speed) {
+  // Manually set grabber speed
+  public Command setAlgaeGrabberSpeedCommand(double speed) {
     return Commands.runOnce(() -> {
       leftGrabberMotor.set(speed);
       rightGrabberMotor.set(speed);
     }, this);
   }
 
-  public Command setDeploySpeed(double speed) {
+  // Manually set deploy speed
+  public Command setDeploySpeedCommand(double speed) {
     return Commands.runOnce(() -> {
       deployMotor.set(speed);
     }, this);
@@ -101,26 +124,59 @@ public class Algae extends SubsystemBase {
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Algae Encoder", algaeEncoder.get());
+
+    SmartDashboard.putNumber("Algae Arm Encoder", algaeEncoder.get());
+    SmartDashboard.putNumber("Algae Arm Angle", convertTicksToDegrees(algaeEncoder.get()));
     SmartDashboard.putNumber("Algae Laser Can", algaeLaserCan.getMeasurement().distance_mm);
 
     updateAlgaeStatus();
 
-    if (true) {
-      double speed = algaeArmPID.calculate(targetAlgaeAngle - algaeEncoder.get()) * 2.5;
-      speed = MathUtil.clamp(speed, -0.4, 0.4);
-      deployMotor.set(speed);
+    if (!RobotContainer.getTestMode()) {
+      updateClosedLoop();
     }
+
   }
 
+  // Check if algae status has changed
   private void updateAlgaeStatus() {
+
     if (hasAlgae().getAsBoolean() != hasAlgae) {
       hasAlgae = hasAlgae().getAsBoolean();
+      RobotContainer.setHasAlgae(hasAlgae().getAsBoolean());
 
       if (hasAlgae().getAsBoolean()) {
         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
       }
     }
+
+  }
+
+  // Returns arm angle in degrees from encoder ticks
+  public double convertTicksToDegrees(double ticks) {
+    return ((Constants.AlgaeConstants.algaeDownEncoder - ticks) / Constants.AlgaeConstants.algaeUpEncoder) * (90);
+  }
+
+  private void updateClosedLoop() {
+
+    double feedForwardSpeed = 0;
+    double pidSpeed = 0;
+
+    double armAngleDegrees = convertTicksToDegrees(algaeEncoder.get());
+    double armAngleRadians = Units.degreesToRadians(armAngleDegrees);
+
+    double rawVelocity = deployMotor.getVelocity().getValueAsDouble();
+    double radianVelocity = Units.rotationsToRadians(rawVelocity);
+
+    if (hasAlgae().getAsBoolean()) {
+      feedForwardSpeed = algaeArmFeedForward.calculate(armAngleRadians, radianVelocity);
+      pidSpeed = algaeArmPID.calculate(targetAlgaeAngle - algaeEncoder.get());
+    } else {
+      feedForwardSpeed = emptyArmFeedForward.calculate(armAngleRadians, radianVelocity);
+      pidSpeed = emptyArmPID.calculate(targetAlgaeAngle - algaeEncoder.get());
+    }
+
+    double combinedSpeed = MathUtil.clamp(feedForwardSpeed + pidSpeed, -0.4, 0.4);
+    deployMotor.set(combinedSpeed);
   }
 
 }

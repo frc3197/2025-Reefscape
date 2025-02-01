@@ -12,6 +12,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,6 +26,7 @@ import frc.robot.RobotContainer;
 import frc.robot.enums.ErrorMode;
 import frc.robot.util.ErrorBody;
 
+@SuppressWarnings("unused")
 public class Elevator extends SubsystemBase {
 
   // Elevation motors
@@ -33,11 +37,18 @@ public class Elevator extends SubsystemBase {
   private final Encoder elevatorEncoder;
 
   // Elevator
-  private ElevatorFeedforward elevatorFeedforward;
-  private final PIDController testPID;
+  private ElevatorFeedforward emptyElevatorFeedforward;
+  private ElevatorFeedforward algaeElevatorFeedforward;
+  private final PIDController emptyLoadPID;
+  private final PIDController algaeLoadPID;
 
   // Target elevation height
   private double targetHeightTicks = 0;
+
+  // Elevator network table topic setup
+  private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  private final NetworkTable driveStateTable = inst.getTable("Elevator");
+  private final DoublePublisher elevatorEncoderTopic = driveStateTable.getDoubleTopic("ElevatorEncoder").publish();
 
   public Elevator() {
 
@@ -53,8 +64,11 @@ public class Elevator extends SubsystemBase {
     this.elevatorEncoder = new Encoder(Constants.ElevatorConstants.elevatorEncoderChannelA,
         Constants.ElevatorConstants.elevatorEncoderChannelB);
 
-    this.elevatorFeedforward = Constants.ElevatorConstants.lightLoadElevatorFeed;
-    this.testPID = Constants.ElevatorConstants.lightLoadElevatorPID;
+    this.emptyElevatorFeedforward = Constants.ElevatorConstants.emptyLoadElevatorFeed;
+    this.algaeElevatorFeedforward = Constants.ElevatorConstants.algaeLoadElevatorFeed;
+
+    this.emptyLoadPID = Constants.ElevatorConstants.emptyLoadElevatorPID;
+    this.algaeLoadPID = Constants.ElevatorConstants.algaeLoadElevatorPID;
 
     this.elevatorEncoder.setReverseDirection(true);
     this.elevatorEncoder.reset();
@@ -63,25 +77,16 @@ public class Elevator extends SubsystemBase {
 
   @Override
   public void periodic() {
-
-    SmartDashboard.putNumber("Elevator encoder", readEncoder());
-
-    if (!RobotContainer.isTestMode().getAsBoolean() && true) {
-
-      double calculatedSpeed = testPID.calculate((readEncoder() - targetHeightTicks) / 1000);
-      double feedSpeed = elevatorFeedforward.calculate(leftMotor.get() / 10);
-
-      SmartDashboard.putNumber("Elevator PID calc", calculatedSpeed);
-      SmartDashboard.putNumber("Feed Elevator Calculation", feedSpeed);
-
-      double finalSpeed = MathUtil.clamp(calculatedSpeed, -0.85, 0.95);
-
-      leftMotor.set(finalSpeed);
-      rightMotor.set(finalSpeed);
+    // If not in test mode, update closed loop
+    if (!RobotContainer.getTestMode()) {
+      updateClosedLoop();
     }
 
+    // Check elevator errors
     checkError();
 
+    // Update network tables for debugging
+    updateNetworkTables();
   }
 
   // Manually set elevator speed with constant
@@ -137,5 +142,33 @@ public class Elevator extends SubsystemBase {
         }));
       }
     }
+  }
+
+  // Update the closed loop for automatic control
+  private void updateClosedLoop() {
+
+    double calculatedPIDSpeed = 0;
+    double feedForwardSpeed = 0;
+
+    if(RobotContainer.getHasAlgae() && false) {
+      feedForwardSpeed = algaeElevatorFeedforward.calculate(leftMotor.getVelocity().getValueAsDouble());
+      calculatedPIDSpeed = algaeLoadPID.calculate(readEncoder() - targetHeightTicks);
+    } else {
+      feedForwardSpeed = emptyElevatorFeedforward.calculate(leftMotor.getVelocity().getValueAsDouble());
+      calculatedPIDSpeed = emptyLoadPID.calculate(readEncoder() - targetHeightTicks);
+    }
+
+    SmartDashboard.putNumber("Elevator PID calc", calculatedPIDSpeed);
+    SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
+
+    double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.75, 0.95);
+
+    leftMotor.set(finalSpeed);
+    rightMotor.set(finalSpeed);
+  }
+
+  // Send values over network table topics
+  private void updateNetworkTables() {
+    elevatorEncoderTopic.set(readEncoder());
   }
 }
