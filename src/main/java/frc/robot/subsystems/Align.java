@@ -7,24 +7,20 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.enums.AlignRequestType;
+import frc.robot.enums.RobotMode;
 
+@SuppressWarnings("unused")
 public class Align extends SubsystemBase {
 
   private int requestedAlignSection = 1;
-
-  private CommandSwerveDrivetrain drive;
-
-  private Command leftAlignCommand;
-  private Command rightAlignCommand;
+  private final CommandSwerveDrivetrain drive;
 
   public Align(CommandSwerveDrivetrain drive) {
     this.drive = drive;
-
-    setAlignCommands();
   }
 
   @Override
@@ -33,6 +29,7 @@ public class Align extends SubsystemBase {
     SmartDashboard.putNumber("controller angle", RobotContainer.getAlignRequestAngle());
   }
 
+  // Returns selected section, adds rumble if changed
   public int getSection() {
     double oldSection = requestedAlignSection;
 
@@ -54,51 +51,46 @@ public class Align extends SubsystemBase {
     }
     if (oldSection != requestedAlignSection) {
       RobotContainer.addRumble(1, 0.35, 0.15, RumbleType.kBothRumble);
-      setAlignCommands();
     }
 
     return requestedAlignSection;
   }
 
+  // Helper function to check if angle is between other angles
   private boolean isBetween(double value, double lower, double upper) {
     return value >= lower && value <= upper;
   }
 
-  private void setAlignCommands() {
+  // Align reef command
+  public Command alignReefRough(AlignRequestType side) {
+
+    // ReefAlignment/
     String pathName = "";
 
     switch (requestedAlignSection) {
       case 0:
-        pathName = "FrontRight";
+        pathName = pathName.concat("FrontRight");
         break;
       case 1:
-        pathName = "FrontCenter";
+        pathName = pathName.concat("FrontCenter");
         break;
       case 2:
-        pathName = "FrontLeft";
+        pathName = pathName.concat("FrontLeft");
         break;
       case 3:
-        pathName = "BackLeft";
+        pathName = pathName.concat("BackLeft");
         break;
       case 4:
-        pathName = "BackCenter";
+        pathName = pathName.concat("BackCenter");
         break;
 
       default:
         break;
     }
 
-    System.out.println(pathName);
-    System.out.println(requestedAlignSection);
-
-    leftAlignCommand = drive.alignReef(pathName.concat("L"));
-    rightAlignCommand = drive.alignReef(pathName.concat("R"));
-  }
-
-  public void alignReef(AlignRequestType side) {
-    if (side == AlignRequestType.LeftReefAlign)
-      CommandScheduler.getInstance().schedule(leftAlignCommand);
-    else
-      CommandScheduler.getInstance().schedule(rightAlignCommand);
+    if (side == AlignRequestType.LEFT_REEF_ALIGN)
+      return Commands.runOnce(() -> {RobotContainer.setRobotMode(RobotMode.ALIGN_REEF_ROUGH);}).andThen(drive.alignReef(pathName.concat("L"))).andThen(Commands.runOnce(() -> {RobotContainer.setRobotMode(RobotMode.NONE);}));
+      else
+      return Commands.runOnce(() -> {RobotContainer.setRobotMode(RobotMode.ALIGN_REEF_ROUGH);}).andThen(drive.alignReef(pathName.concat("R"))).andThen(Commands.runOnce(() -> {RobotContainer.setRobotMode(RobotMode.NONE);}));
   }
 }

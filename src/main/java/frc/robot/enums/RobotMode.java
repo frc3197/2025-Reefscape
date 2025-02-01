@@ -6,8 +6,9 @@ package frc.robot.enums;
 
 
 public enum RobotMode {
-    ALIGN_REEF_INITIAL,
+    ALIGN_REEF_ROUGH,
     ALIGN_REEF_FINE,
     ALIGN_PROCESSOR,
-    TRACK_STATION
+    TRACK_STATION,
+    NONE
 }

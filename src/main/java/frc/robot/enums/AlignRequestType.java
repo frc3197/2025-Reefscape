@@ -6,8 +6,8 @@ package frc.robot.enums;
 
 /** Add your docs here. */
 public enum AlignRequestType {
-    LeftReefAlign,
-    RightReefAlign,
-    LeftStationAlign,
-    RightStationAlign
+    LEFT_REEF_ALIGN,
+    RIGHT_REEF_ALIGN,
+    LEFT_STATION_TRACK,
+    RIGHT_STATION_TRACK
 }

@@ -68,12 +68,13 @@ public class RobotContainer {
     // Controllers
     private final static CommandXboxController driverController = new CommandXboxController(0);
     private final static CommandXboxController operatorController = new CommandXboxController(1);
-
     private final static CommandXboxController[] controllers = { driverController, operatorController };
 
+    // Robot statuses
     private static boolean isEnabled = false;
     private static boolean isTestMode = false;
     private static boolean hasAlgae = false;
+    private static RobotMode robotMode;
 
     public RobotContainer() {
         configureBindings();
@@ -104,20 +105,23 @@ public class RobotContainer {
          * -driverController.getLeftX()))));
          */
 
-        // Align bindings
+        // -------------------------------------------------------------------------
+        // Drive & align bindings
+        // -------------------------------------------------------------------------
 
-        /*
-         * driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
-         * align.alignReef(AlignRequestType.LeftReefAlign);
-         * }));
-         * driverController.rightTrigger().onTrue(Commands.runOnce(() -> {
-         * align.alignReef(AlignRequestType.RightReefAlign);
-         * }));
-         */
-        // driverController.rightTrigger().onTrue(align.alignReef(AlignRequestType.RightReefAlign,
-        // align::getSection) );
+        driverController.leftTrigger().onTrue(
+                align.alignReefRough(AlignRequestType.LEFT_REEF_ALIGN).onlyWhile(() -> {
+                    return this.getDriveControllerLeftDistance() < 0.35;
+                }));
+        driverController.rightTrigger().onTrue(
+                align.alignReefRough(AlignRequestType.RIGHT_REEF_ALIGN).onlyWhile(() -> {
+                    return this.getDriveControllerLeftDistance() < 0.35;
+                }));
+        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
+        // -------------------------------------------------------------------------
         // Elevator bindings
+        // -------------------------------------------------------------------------
 
         /*
          * driverController.leftTrigger(0.05)
@@ -151,19 +155,27 @@ public class RobotContainer {
         // Reset encoder
         operatorController.start().onTrue(elevator.getEncoderResetCommand());
 
+        // -------------------------------------------------------------------------
         // Intake bindings
+        // -------------------------------------------------------------------------
         driverController.b().onTrue(
                 getIntakeCommand());
 
+        // -------------------------------------------------------------------------
         // Outtake bindings
+        // -------------------------------------------------------------------------
         driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
 
+        // -------------------------------------------------------------------------
         // Algae bindings
-        driverController.leftBumper().onTrue(algae.setAlgaeGrabberSpeedCommand(0.85)).onFalse(algae.setAlgaeGrabberSpeedCommand(0));
-        driverController.rightBumper().onTrue(algae.setAlgaeGrabberSpeedCommand(-1.0)).onFalse(algae.setAlgaeGrabberSpeedCommand(0));
+        // -------------------------------------------------------------------------
+        driverController.leftBumper().onTrue(algae.setAlgaeGrabberSpeedCommand(0.85))
+                .onFalse(algae.setAlgaeGrabberSpeedCommand(0));
+        driverController.rightBumper().onTrue(algae.setAlgaeGrabberSpeedCommand(-1.0))
+                .onFalse(algae.setAlgaeGrabberSpeedCommand(0));
 
-        // driverController.y().onTrue(algae.setDeploySpeed(0.3)).onFalse(algae.setDeploySpeed(0.0));
-        // driverController.a().onTrue(algae.setDeploySpeed(-0.3)).onFalse(algae.setDeploySpeed(0.0));
+        driverController.povUp().onTrue(algae.setDeploySpeedCommand(0.3)).onFalse(algae.setDeploySpeedCommand(0.0));
+        driverController.povDown().onTrue(algae.setDeploySpeedCommand(-0.3)).onFalse(algae.setDeploySpeedCommand(0.0));
 
         driverController.y().onTrue(algae.setTargetAngleDegrees(80));
         driverController.povRight().onTrue(algae.setTargetAngleDegrees(10));
@@ -182,9 +194,6 @@ public class RobotContainer {
          * sysIdQuasistatic(Direction.kReverse));
          */
 
-        // reset the field-centric heading on left bumper press
-        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 
@@ -202,7 +211,7 @@ public class RobotContainer {
         return Math.sqrt(Math.pow(operatorController.getLeftX(), 2) + Math.pow(operatorController.getLeftY(), 2)) > 0.8;
     }
 
-    public static double getDriveControllerLeftDistance() {
+    private double getDriveControllerLeftDistance() {
         return Math.sqrt(Math.pow(driverController.getLeftX(), 2) + Math.pow(driverController.getLeftY(), 2));
     }
 
@@ -272,6 +281,14 @@ public class RobotContainer {
 
     public static boolean getHasAlgae() {
         return hasAlgae;
+    }
+
+    public static void setRobotMode(RobotMode value) {
+        robotMode = value;
+    }
+
+    public static RobotMode getRobotMode() {
+        return robotMode;
     }
 
     public Command getIntakeCommand() {
