@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants;
 
+@SuppressWarnings("unused")
 public class Outtake extends SubsystemBase {
 
   private LaserCan outtakeLaserCan;
@@ -42,10 +43,6 @@ public class Outtake extends SubsystemBase {
 
     SmartDashboard.putBoolean("Not bridging", !coralBridging.getAsBoolean());
 
-  }
-
-  public boolean isBridging() {
-    return coralBridging.getAsBoolean();
   }
 
   public BooleanSupplier isBridgingSupplier() {

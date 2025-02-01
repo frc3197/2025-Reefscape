@@ -38,7 +38,7 @@ public class LightManager extends SubsystemBase {
       return;
     }
 
-    if(RobotContainer.hasAlerts()) {
+    if (RobotContainer.hasAlerts()) {
       checkAlertLights();
       return;
     }
@@ -51,12 +51,14 @@ public class LightManager extends SubsystemBase {
       }
       return;
     }
-    
+
     turnOffLights();
   }
 
   // Further logic to distinguish between priority levels
+  // --------------------------------------------------------------
 
+  // Check error status
   private void checkErrorLights() {
     if (RobotContainer.hasError(ErrorMode.ELEVATOR_REQUIRES_ZERO)) {
       patternSetElevatorError();
@@ -67,9 +69,10 @@ public class LightManager extends SubsystemBase {
     }
   }
 
+  // Check alert status
   private void checkAlertLights() {
 
-    if(!RobotContainer.getEnabled()) {
+    if (!RobotContainer.getEnabled()) {
       return;
     }
 
@@ -77,50 +80,53 @@ public class LightManager extends SubsystemBase {
       patternSetAcquiredCoralAlert();
       return;
     }
-    if(RobotContainer.hasAlert(AlertMode.ACQUIRED_ALGAE)) {
+    if (RobotContainer.hasAlert(AlertMode.ACQUIRED_ALGAE)) {
       patternSetAcquiredAlgaeAlert();
       return;
     }
   }
 
-  // Actual light patterns
-  private void patternSetIdleAlliance() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      // Sets the specified LED to the GRB values for red
-      if (RobotContainer.isRed())
-        buffer.setRGB(i, 0, 130 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
-            0);
-      else
-        buffer.setRGB(i, 0, 0,
-            130 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0));
-    }
-    led.setData(buffer);
-  }
+  // -------------------------------------------------------------------
+  // ERROR PATTERNS
+  // -------------------------------------------------------------------
 
-  private void patternSetIdleOrange() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      // Sets the specified LED to the GRB values for red
-      buffer.setRGB(i, 120 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0), 120 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
-          0);
-    }
-    led.setData(buffer);
-  }
-
+  // Elevator error
   private void patternSetElevatorError() {
     if (Timer.getTimestamp() % 2 <= 1)
       for (int i = 0; i < buffer.getLength(); i++) {
-        // Sets the specified LED to the GRB values for red
         buffer.setRGB(i, 0, 180, 0);
       }
     else {
       for (int i = 0; i < buffer.getLength(); i++) {
-        // Sets the specified LED to the GRB values for red
         buffer.setRGB(i, 0, 0, 0);
       }
     }
     led.setData(buffer);
   }
 
+  // Limelight error
+  private void patternSetLimelightError() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 90, 0, 0);
+    }
+    led.setData(buffer);
+  }
+
+  // Orange pi error
+  private void patternSetOrangePiError() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 200, 180, 0);
+    }
+    led.setData(buffer);
+  }
+
+  // --------------------------------------------------------------------
+  // ALERT PATTERNS
+  // --------------------------------------------------------------------
+
+  // Coral alert
   private void patternSetAcquiredCoralAlert() {
     if (Timer.getTimestamp() % 0.12 <= 0.06)
       for (int i = 0; i < buffer.getLength(); i++) {
@@ -136,6 +142,7 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
+  // Algae alert
   private void patternSetAcquiredAlgaeAlert() {
     if (Timer.getTimestamp() % 0.12 <= 0.06)
       for (int i = 0; i < buffer.getLength(); i++) {
@@ -151,22 +158,36 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
-  private void patternSetLimelightError() {
+  // --------------------------------------------------------------------
+  // IDLE PATTERNS
+  // --------------------------------------------------------------------
+
+  // Alliance pattern
+  private void patternSetIdleAlliance() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
-      buffer.setRGB(i, 90, 0, 0);
+      if (RobotContainer.isRed())
+        buffer.setRGB(i, 0, 130 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
+            0);
+      else
+        buffer.setRGB(i, 0, 0,
+            130 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0));
     }
     led.setData(buffer);
   }
 
-  private void patternSetOrangePiError() {
+  // Orange pattern
+  private void patternSetIdleOrange() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
-      buffer.setRGB(i, 200, 180, 0);
+      buffer.setRGB(i, 120 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
+          120 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
+          0);
     }
     led.setData(buffer);
   }
 
+  // Turn off lights
   private void turnOffLights() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red

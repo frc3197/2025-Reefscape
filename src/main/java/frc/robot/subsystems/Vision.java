@@ -9,17 +9,9 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
-import com.ctre.phoenix6.Utils;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-
-/*
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-*/
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -29,22 +21,21 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.LimelightHelpers;
+import frc.robot.util.LimelightHelpers;
 
+@SuppressWarnings("unused")
 public class Vision extends SubsystemBase {
 
+  // Photonvision variables
   private final PhotonCamera backCamera;
   private final Transform3d robotToCam = new Transform3d(new Translation3d(0.15, 0.0, 1),
       new Rotation3d(0, 0, Units.degreesToRadians(180))); // Cam mounted facing backward, half a meter forward of
                                                           // center, half a meter up from center.
   private final PhotonPoseEstimator backEstimator;
-
   private final AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // Drive subsystem
   private CommandSwerveDrivetrain drive;
-
-  // private PhotonCamera intake = new PhotonCamera("USB_Camera");
 
   public Vision(CommandSwerveDrivetrain drive) {
     this.drive = drive;
@@ -61,7 +52,6 @@ public class Vision extends SubsystemBase {
     Pose3d bestPose = getDesiredPose();
 
     SmartDashboard.putNumber("Timestamp", getTime());
-
     SmartDashboard.putNumber("Limelight tag", LimelightHelpers.getFiducialID(""));
 
     if (bestPose != null && bestPose.getX() != 0.0) {
@@ -84,6 +74,7 @@ public class Vision extends SubsystemBase {
     return LimelightHelpers.getBotPose3d_wpiBlue("");
   }
 
+  // Returns time, needs to be fixed
   private double getTime() {
     return Timer.getFPGATimestamp();
     /*
@@ -95,6 +86,7 @@ public class Vision extends SubsystemBase {
      */
   }
 
+  // Check photon camera outputs
   private void pollPhotonCameras() {
 
     var result = backCamera.getLatestResult();
@@ -106,7 +98,6 @@ public class Vision extends SubsystemBase {
       PhotonTrackedTarget target = result.getBestTarget();
 
       // Get information from target
-      
       int targetID = target.getFiducialId();
       double poseAmbiguity = target.getPoseAmbiguity();
       Transform3d bestCameraToTarget = target.getBestCameraToTarget();

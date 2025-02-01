@@ -104,18 +104,22 @@ public class Algae extends SubsystemBase {
     SmartDashboard.putNumber("Algae Encoder", algaeEncoder.get());
     SmartDashboard.putNumber("Algae Laser Can", algaeLaserCan.getMeasurement().distance_mm);
 
+    updateAlgaeStatus();
+
+    if (true) {
+      double speed = algaeArmPID.calculate(targetAlgaeAngle - algaeEncoder.get()) * 2.5;
+      speed = MathUtil.clamp(speed, -0.4, 0.4);
+      deployMotor.set(speed);
+    }
+  }
+
+  private void updateAlgaeStatus() {
     if (hasAlgae().getAsBoolean() != hasAlgae) {
       hasAlgae = hasAlgae().getAsBoolean();
 
       if (hasAlgae().getAsBoolean()) {
         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
       }
-    }
-
-    if (true) {
-      double speed = algaeArmPID.calculate(targetAlgaeAngle - algaeEncoder.get()) * 2.5;
-      speed = MathUtil.clamp(speed, -0.4, 0.4);
-      deployMotor.set(speed);
     }
   }
 

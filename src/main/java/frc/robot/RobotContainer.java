@@ -153,7 +153,7 @@ public class RobotContainer {
 
         // Intake bindings
         driverController.b().onTrue(
-                getNewIntakeCommand());
+                getIntakeCommand());
 
         // Outtake bindings
         driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
@@ -166,7 +166,8 @@ public class RobotContainer {
         //driverController.a().onTrue(algae.setDeploySpeed(-0.3)).onFalse(algae.setDeploySpeed(0.0));
         
         driverController.y().onTrue(algae.setTargetAngle(0.25));
-        driverController.a().onTrue(algae.setTargetAngle(0.41));
+        driverController.povRight().onTrue(algae.setTargetAngle(0.41));
+        driverController.a().onTrue(algae.setTargetAngle(0.47));
 
         /*
          * // Run SysId routines when holding back/start and X/Y.
@@ -263,31 +264,11 @@ public class RobotContainer {
 
     public Command getIntakeCommand() {
         return new SequentialCommandGroup(
-                intake.setIntakeCommand(0.65, 0.4),
-                outtake.feedOuttake(0.1),
-                Commands.waitUntil(outtake.isBridgingSupplier()),
-                intake.setIntakeCommand(0.3, 0.1),
-                outtake.feedOuttake(0.05),
-                Commands.waitUntil(() -> {
-                    return !outtake.isBridging();
-                }),
-                new InstantCommand(() -> {
-                    if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
-                        RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 1.5));
-                    }
-                }),
-                intake.setIntakeCommand(0, 0),
-                outtake.feedOuttake(-0.1),
-                new WaitCommand(0.15));
-    }
-
-    public Command getNewIntakeCommand() {
-        return new SequentialCommandGroup(
                 outtake.feedOuttake(0.5),
                 Commands.waitUntil(outtake.isBridgingSupplier()),
                 outtake.feedOuttake(0.2),
                 Commands.waitUntil(() -> {
-                    return !outtake.isBridging();
+                    return !outtake.isBridgingSupplier().getAsBoolean();
                 }),
                 new InstantCommand(() -> {
                     if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {

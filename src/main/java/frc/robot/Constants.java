@@ -4,7 +4,6 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -84,7 +83,7 @@ public class Constants {
 		public static final int level1Encoder = 2500;
 		public static final int level2Encoder = 25000;
 		public static final int level3Encoder = 44500;
-		public static final int level4Encoder = 68250;
+		public static final int level4Encoder = 69500;
 	}
 
 	public static class AlgaeConstants {
