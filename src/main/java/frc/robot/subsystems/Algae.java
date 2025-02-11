@@ -58,7 +58,7 @@ public class Algae extends SubsystemBase {
   private final ArmFeedforward emptyArmFeedForward;
   private final PIDController algaeArmPID;
   private final ArmFeedforward algaeArmFeedForward;
-  private double targetAlgaeAngle = 0.3;
+  private double targetAlgaeAngle = 45;
 
   public Algae() {
 
@@ -71,14 +71,14 @@ public class Algae extends SubsystemBase {
 
     // Configuration for spark maxes
     this.leftConfig = new SparkMaxConfig();
-    this.leftConfig.smartCurrentLimit(20, 20);
+    this.leftConfig.smartCurrentLimit(40, 40);
     this.leftConfig.inverted(false);
     this.leftConfig.idleMode(IdleMode.kBrake);
     this.leftGrabberMotor.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     // Configuration for spark maxes
     this.rightConfig = new SparkMaxConfig();
-    this.rightConfig.smartCurrentLimit(20, 20);
+    this.rightConfig.smartCurrentLimit(40, 40);
     this.rightConfig.inverted(true);
     this.rightConfig.idleMode(IdleMode.kBrake);
     this.rightGrabberMotor.configure(rightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -96,7 +96,7 @@ public class Algae extends SubsystemBase {
 
   public Command setTargetAngleDegrees(double angleDegrees) {
     return Commands.runOnce(() -> {
-      this.targetAlgaeAngle = convertTicksToDegrees(angleDegrees);
+      this.targetAlgaeAngle = angleDegrees;
     });
   }
 
@@ -108,11 +108,33 @@ public class Algae extends SubsystemBase {
     }, this);
   }
 
+  public Command setAlgaeGrabberSpeedCommand(double speedLeft, double speedRight) {
+    return Commands.runOnce(() -> {
+      leftGrabberMotor.set(speedLeft);
+      rightGrabberMotor.set(speedRight);
+    }, this);
+  }
+
   // Manually set deploy speed
   public Command setDeploySpeedCommand(double speed) {
     return Commands.runOnce(() -> {
       deployMotor.set(speed);
     }, this);
+  }
+
+  public BooleanSupplier getHasAlgaeSupplier() {
+    return hasAlgae();
+  }
+
+  public Command getAutomaticAlgaeCommand() {
+    return Commands.runOnce(() -> {
+      leftGrabberMotor.set(0.85);
+      rightGrabberMotor.set(0.85);
+    }).andThen(Commands.waitUntil(hasAlgae()).withTimeout(5)).andThen(() -> {
+      RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
+      leftGrabberMotor.set(0);
+      rightGrabberMotor.set(0);
+    });
   }
 
   public BooleanSupplier hasAlgae() {
@@ -133,7 +155,13 @@ public class Algae extends SubsystemBase {
 
     if (!RobotContainer.getTestMode()) {
       updateClosedLoop();
+    } else {
+      deployMotor.set(0);
     }
+
+    // 0.41
+
+    //deployMotor.setVoltage(0.42);
 
   }
 
@@ -145,7 +173,7 @@ public class Algae extends SubsystemBase {
       RobotContainer.setHasAlgae(hasAlgae().getAsBoolean());
 
       if (hasAlgae().getAsBoolean()) {
-        RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
+        //RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
       }
     }
 
@@ -158,6 +186,8 @@ public class Algae extends SubsystemBase {
 
   private void updateClosedLoop() {
 
+    SmartDashboard.putNumber("Angle Algae OFFSET", targetAlgaeAngle + convertTicksToDegrees(algaeEncoder.get()));
+
     double feedForwardSpeed = 0;
     double pidSpeed = 0;
 
@@ -167,16 +197,16 @@ public class Algae extends SubsystemBase {
     double rawVelocity = deployMotor.getVelocity().getValueAsDouble();
     double radianVelocity = Units.rotationsToRadians(rawVelocity);
 
-    if (hasAlgae().getAsBoolean()) {
+    if (hasAlgae().getAsBoolean() && false) {
       feedForwardSpeed = algaeArmFeedForward.calculate(armAngleRadians, radianVelocity);
       pidSpeed = algaeArmPID.calculate(targetAlgaeAngle - algaeEncoder.get());
     } else {
-      feedForwardSpeed = emptyArmFeedForward.calculate(armAngleRadians, radianVelocity);
-      pidSpeed = emptyArmPID.calculate(targetAlgaeAngle - algaeEncoder.get());
+      feedForwardSpeed = emptyArmFeedForward.calculate(armAngleRadians, -radianVelocity);
+      pidSpeed = -emptyArmPID.calculate((targetAlgaeAngle - convertTicksToDegrees(algaeEncoder.get()))/10);
     }
 
-    double combinedSpeed = MathUtil.clamp(feedForwardSpeed + pidSpeed, -0.4, 0.4);
-    deployMotor.set(combinedSpeed);
+    double combinedSpeed = MathUtil.clamp(pidSpeed, -0.4, 0.4);
+    deployMotor.set(combinedSpeed + feedForwardSpeed);
   }
 
 }

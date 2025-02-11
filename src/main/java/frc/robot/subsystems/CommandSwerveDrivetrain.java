@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -63,7 +64,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.ApplyRobotSpeeds AutoRequest = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.ApplyRobotSpeeds RobotCenteredRequest = new SwerveRequest.ApplyRobotSpeeds();
 
     // Pose estimator standard deviations
     private static final edu.wpi.first.math.Vector<N3> newStateStdDevs = VecBuilder.fill(0.025, 0.025,
@@ -163,6 +164,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 newStateStdDevs,
                 newVisionMeasurementStdDevs);
 
+        //RobotContainer.addNamedCommands();
+
         configureAutoBuilder();
     }
 
@@ -187,17 +190,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this::getNewCurrentPose, // Robot pose supplier
                 this::resetNewPose, // Method to reset odometry (will be called if your auto has a starting pose)
                 this::getCurrentRobotChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                (speeds, feedforwards) -> this.setControl(AutoRequest.withSpeeds( new ChassisSpeeds(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, -speeds.omegaRadiansPerSecond) )), // Method that will drive the
-                                                                                           // robot given ROBOT RELATIVE
-                                                                                           // ChassisSpeeds. Also
-                                                                                           // optionally outputs
-                                                                                           // individual module
-                                                                                           // feedforwards
+                (speeds, feedforwards) -> this
+                        .setControl(RobotCenteredRequest.withSpeeds(new ChassisSpeeds(speeds.vxMetersPerSecond,
+                                speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond))), // Method that will drive
+                                                                                            // the
+                // robot given ROBOT RELATIVE
+                // ChassisSpeeds. Also
+                // optionally outputs
+                // individual module
+                // feedforwards
                 new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
                                                 // holonomic drive trains
-                        new PIDConstants(1, 0.0, 0.0), // Translation PID constants
+                        new PIDConstants(1, 0.1, 0.0), // Translation PID constants
                         new PIDConstants(0.5, 0.0, 0.2) // Rotation PID constants
-                        
+
                 ),
                 config, // The robot configuration
                 () -> {
@@ -235,7 +241,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // Returns pose estimator pose
     public Pose2d getNewCurrentPose() {
-        return new Pose2d(newPoseEstimator.getEstimatedPosition().getX(), newPoseEstimator.getEstimatedPosition().getY(), newPoseEstimator.getEstimatedPosition().getRotation());
+        return new Pose2d(newPoseEstimator.getEstimatedPosition().getX(),
+                newPoseEstimator.getEstimatedPosition().getY(), newPoseEstimator.getEstimatedPosition().getRotation());
     }
 
     // Resets pose estimator pose
@@ -387,19 +394,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         return tempCommand;
 
-        
-
         // Create the constraints to use while pathfinding
-        //PathConstraints constraints = new PathConstraints(
-                //2.5, 3.0,
-                //Units.degreesToRadians(540), Units.degreesToRadians(720));
+        // PathConstraints constraints = new PathConstraints(
+        // 2.5, 3.0,
+        // Units.degreesToRadians(540), Units.degreesToRadians(720));
 
         // Since AutoBuilder is configured, we can use it to build pathfinding commands
-        //return AutoBuilder.pathfindToPose(
-               // targetPose.get(),
-               // constraints,
-                //1.0 // Goal end velocity in meters/sec
-        //);
+        // return AutoBuilder.pathfindToPose(
+        // targetPose.get(),
+        // constraints,
+        // 1.0 // Goal end velocity in meters/sec
+        // );
+    }
+
+    public void driveRobotRelative(ChassisSpeeds speeds) {
+        this.setControl(RobotCenteredRequest.withSpeeds(speeds));
     }
 
 }

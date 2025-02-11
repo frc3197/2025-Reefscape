@@ -77,6 +77,9 @@ public class Elevator extends SubsystemBase {
 
   @Override
   public void periodic() {
+    SmartDashboard.putBoolean("Test Mode", RobotContainer.getTestMode());
+    SmartDashboard.putNumber("NEW ELEVATOR ENCODER", readEncoder());
+
     // If not in test mode, update closed loop
     if (!RobotContainer.getTestMode()) {
       updateClosedLoop();
@@ -87,6 +90,10 @@ public class Elevator extends SubsystemBase {
 
     // Update network tables for debugging
     updateNetworkTables();
+  }
+
+  public double getPositionError() {
+    return Math.abs(readEncoder() - targetHeightTicks);
   }
 
   // Manually set elevator speed with constant
@@ -150,15 +157,17 @@ public class Elevator extends SubsystemBase {
     double calculatedPIDSpeed = 0;
     double feedForwardSpeed = 0;
 
-    if(RobotContainer.getHasAlgae() && false) {
+    if (RobotContainer.getHasAlgae() && false) {
       feedForwardSpeed = algaeElevatorFeedforward.calculate(leftMotor.getVelocity().getValueAsDouble());
-      calculatedPIDSpeed = algaeLoadPID.calculate(readEncoder() - targetHeightTicks);
+      calculatedPIDSpeed = algaeLoadPID.calculate((readEncoder() - targetHeightTicks) / 100);
     } else {
       feedForwardSpeed = emptyElevatorFeedforward.calculate(leftMotor.getVelocity().getValueAsDouble());
-      calculatedPIDSpeed = emptyLoadPID.calculate(readEncoder() - targetHeightTicks);
+      calculatedPIDSpeed = emptyLoadPID.calculate((readEncoder() - targetHeightTicks) / 100);
     }
+    calculatedPIDSpeed *= 0.015;
 
     SmartDashboard.putNumber("Elevator PID calc", calculatedPIDSpeed);
+    SmartDashboard.putNumber("Elevator Speed", leftMotor.getVelocity(true).getValueAsDouble());
     SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
 
     double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.75, 0.95);

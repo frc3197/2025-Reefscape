@@ -6,5 +6,6 @@ package frc.robot.enums;
 
 public enum AlertMode {
     ACQUIRED_CORAL,
-    ACQUIRED_ALGAE
+    ACQUIRED_ALGAE,
+    FULLY_ALIGNED
 }

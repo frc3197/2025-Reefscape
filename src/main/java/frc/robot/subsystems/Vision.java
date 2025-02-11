@@ -5,9 +5,12 @@
 package frc.robot.subsystems;
 
 import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonUtils;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonTrackedTarget;
+
+import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -28,11 +31,23 @@ public class Vision extends SubsystemBase {
 
   // Photonvision variables
   private final PhotonCamera backCamera;
-  private final Transform3d robotToCam = new Transform3d(new Translation3d(0.15, 0.0, 1),
+  private final PhotonCamera leftCamera;
+  private final PhotonCamera rightCamera;
+  private final Transform3d robotToBack = new Transform3d(new Translation3d(0.15, 0.0, 1),
       new Rotation3d(0, 0, Units.degreesToRadians(180))); // Cam mounted facing backward, half a meter forward of
                                                           // center, half a meter up from center.
+
+  private final Transform3d robotToLeft = new Transform3d(new Translation3d(Units.inchesToMeters(10.75), Units.inchesToMeters(-12.25), Units.inchesToMeters(8.75)),
+      new Rotation3d(0, Units.degreesToRadians(5), Units.degreesToRadians(35)));
+  private final Transform3d robotToRight = new Transform3d(new Translation3d(0.15, 0.0, 0.2),
+      new Rotation3d(0, 0, Units.degreesToRadians(0)));
   private final PhotonPoseEstimator backEstimator;
+  private final PhotonPoseEstimator leftEstimator;
+  private final PhotonPoseEstimator rightEstimator;
   private final AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+
+  // Reef & algae align camera
+  private final PhotonCamera alignCamera;
 
   // Drive subsystem
   private CommandSwerveDrivetrain drive;
@@ -41,9 +56,16 @@ public class Vision extends SubsystemBase {
     this.drive = drive;
 
     this.backCamera = new PhotonCamera("camera-back");
+    this.leftCamera = new PhotonCamera("camera-left");
+    this.rightCamera = new PhotonCamera("camera-right");
     this.backEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
-        robotToCam);
+        robotToBack);
+    this.leftEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
+        robotToLeft);
+    this.rightEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
+        robotToRight);
 
+    this.alignCamera = new PhotonCamera("camera-align");
   }
 
   @Override
@@ -51,12 +73,12 @@ public class Vision extends SubsystemBase {
 
     Pose3d bestPose = getDesiredPose();
 
-    SmartDashboard.putNumber("Timestamp", getTime());
+    SmartDashboard.putNumber("Timestamp", getLimelightTime());
     SmartDashboard.putNumber("Limelight tag", LimelightHelpers.getFiducialID(""));
 
     if (bestPose != null && bestPose.getX() != 0.0) {
       SmartDashboard.putBoolean("HAS VISION", true);
-      drive.addNewVisionMeasurement(bestPose.toPose2d(), getTime());
+      drive.addNewVisionMeasurement(bestPose.toPose2d(), getLimelightTime());
 
       double[] newVision = { bestPose.toPose2d().getX(), bestPose.toPose2d().getY(),
           bestPose.toPose2d().getRotation().getDegrees() };
@@ -75,27 +97,31 @@ public class Vision extends SubsystemBase {
   }
 
   // Returns time, needs to be fixed
-  private double getTime() {
+  private double getLimelightTime() {
     return Timer.getFPGATimestamp();
-    /*
-     * return Utils.fpgaToCurrentTime(Timer.getTimestamp()
-     * - (LimelightHelpers.getLatency_Pipeline(Constants.VisionConstants.
-     * limelightFrontName) / 1000.0)
-     * - (LimelightHelpers.getLatency_Capture(Constants.VisionConstants.
-     * limelightFrontName) / 1000.0));
-     */
+    
+     /*return Utils.fpgaToCurrentTime(Timer.getTimestamp()
+     - (LimelightHelpers.getLatency_Pipeline("") / 1000.0)
+     - (LimelightHelpers.getLatency_Capture("") / 1000.0));*/
+     
   }
 
   // Check photon camera outputs
   private void pollPhotonCameras() {
 
-    var result = backCamera.getLatestResult();
-    boolean hasTargets = result.hasTargets();
+    var backResult = backCamera.getLatestResult();
+    boolean backHasTargets = backResult.hasTargets();
 
-    SmartDashboard.putBoolean("hasTargets", hasTargets);
+    var leftResult = leftCamera.getLatestResult();
+    boolean leftHasTargets = leftResult.hasTargets();
 
-    if (hasTargets) {
-      PhotonTrackedTarget target = result.getBestTarget();
+    var rightResult = rightCamera.getLatestResult();
+    boolean rightHasTargets = rightResult.hasTargets();
+
+    SmartDashboard.putBoolean("hasTargets", backHasTargets);
+
+    if (backHasTargets && false) {
+      PhotonTrackedTarget target = backResult.getBestTarget();
 
       // Get information from target
       int targetID = target.getFiducialId();
@@ -103,10 +129,42 @@ public class Vision extends SubsystemBase {
       Transform3d bestCameraToTarget = target.getBestCameraToTarget();
       Transform3d alternateCameraToTarget = target.getAlternateCameraToTarget();
 
-      SmartDashboard.putNumber("Back camera ambiguity", poseAmbiguity);
+      drive.addNewVisionMeasurement(new Pose2d(bestCameraToTarget.getX(), bestCameraToTarget.getY(),
+          bestCameraToTarget.getRotation().toRotation2d()), Timer.getFPGATimestamp());
+    }
+
+    if (leftHasTargets) {
+      PhotonTrackedTarget target = leftResult.getBestTarget();
+
+      // Get information from target
+      int targetID = target.getFiducialId();
+      double poseAmbiguity = target.getPoseAmbiguity();
+
+      Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(target.getBestCameraToTarget(), aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToLeft);
+
+      drive.addNewVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds());
+    }
+
+    if (rightHasTargets && false) {
+      PhotonTrackedTarget target = rightResult.getBestTarget();
+
+      // Get information from target
+      int targetID = target.getFiducialId();
+      double poseAmbiguity = target.getPoseAmbiguity();
+      Transform3d bestCameraToTarget = target.getBestCameraToTarget();
+      Transform3d alternateCameraToTarget = target.getAlternateCameraToTarget();
 
       drive.addNewVisionMeasurement(new Pose2d(bestCameraToTarget.getX(), bestCameraToTarget.getY(),
           bestCameraToTarget.getRotation().toRotation2d()), Timer.getFPGATimestamp());
     }
+  }
+
+  public double[] getBestAlignCameraTarget() {
+    var result = alignCamera.getLatestResult();
+    if (result.hasTargets()) {
+      var bestTarget = result.getBestTarget();
+      return new double[] { bestTarget.getYaw(), bestTarget.getPitch() };
+    }
+    return new double[] { 0, 0 };
   }
 }

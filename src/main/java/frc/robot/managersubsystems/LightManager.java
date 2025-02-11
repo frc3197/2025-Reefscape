@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.enums.ErrorMode;
+import frc.robot.enums.RobotMode;
 import frc.robot.enums.AlertMode;
 
 public class LightManager extends SubsystemBase {
@@ -40,6 +41,11 @@ public class LightManager extends SubsystemBase {
 
     if (RobotContainer.hasAlerts()) {
       checkAlertLights();
+      return;
+    }
+
+    if (RobotContainer.getEnabled() && RobotContainer.hasAlerts()) {
+      checkModeLights();
       return;
     }
 
@@ -76,7 +82,10 @@ public class LightManager extends SubsystemBase {
     if (!RobotContainer.getEnabled()) {
       return;
     }
-
+    if (RobotContainer.hasAlert(AlertMode.FULLY_ALIGNED)) {
+      patternSetFullyAligned();
+      return;
+    }
     if (RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
       patternSetAcquiredCoralAlert();
       return;
@@ -143,6 +152,21 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
+  private void patternSetFullyAligned() {
+    if (Timer.getTimestamp() % 0.12 <= 0.06)
+      for (int i = 0; i < buffer.getLength(); i++) {
+        // Sets the specified LED to the GRB values for red
+        buffer.setRGB(i, 150, 150, 150);
+      }
+    else {
+      for (int i = 0; i < buffer.getLength(); i++) {
+        // Sets the specified LED to the GRB values for red
+        buffer.setRGB(i, 0, 0, 0);
+      }
+    }
+    led.setData(buffer);
+  }
+
   // Algae alert
   private void patternSetAcquiredAlgaeAlert() {
     if (Timer.getTimestamp() % 0.12 <= 0.06)
@@ -181,9 +205,14 @@ public class LightManager extends SubsystemBase {
   private void patternSetIdleOrange() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
-      buffer.setRGB(i, 120 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
-          120 + (int) Math.round(Math.cos((Timer.getTimestamp() * 1.25 + (i / 6)) * 2.75) * 125.0),
-          0);
+
+      double intensity = (Math.sin((i / 5.0) + (Timer.getTimestamp() / 1.0)));
+
+      if (intensity < 0) {
+        intensity = 0;
+      }
+
+      buffer.setRGB(i, (int) (80.0 * intensity), (int) (255.0 * intensity), 0);
     }
     led.setData(buffer);
   }
@@ -195,5 +224,34 @@ public class LightManager extends SubsystemBase {
       buffer.setRGB(i, 0, 0, 0);
     }
     led.setData(buffer);
+  }
+
+  private void patternSetAlignRough() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 10, 100, 10);
+    }
+    led.setData(buffer);
+  }
+
+  private void patternSetAlignFine() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 120, 250, 120);
+    }
+    led.setData(buffer);
+  }
+
+  private void checkModeLights() {
+    if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_ROUGH) {
+      patternSetAlignRough();
+      return;
+    } else if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_FINE) {
+      patternSetAlignFine();
+      return;
+    } else {
+      turnOffLights();
+      return;
+    }
   }
 }

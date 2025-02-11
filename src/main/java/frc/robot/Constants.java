@@ -18,9 +18,17 @@ public class Constants {
 		public static final int leftElevatorMotorId = 8;
 		public static final int rightElevatorMotorId = 9;
 
-		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
+
+
+
+		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0, 0.03, 0);
+
+
+
+
 		public static final ElevatorFeedforward algaeLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
-		public static final PIDController emptyLoadElevatorPID = new PIDController(0.2, 0, 0);
+
+		public static final PIDController emptyLoadElevatorPID = new PIDController(0.95, 0, 0);
 		public static final PIDController algaeLoadElevatorPID = new PIDController(0.2, 0, 0);
 
 		public static final TalonFXConfiguration leftElevatorMotorConfig = new TalonFXConfiguration().withCurrentLimits(
@@ -52,10 +60,14 @@ public class Constants {
 		public static final int elevatorHighHeight = 200;
 
 		public static final int loadingStationEncoder = 100;
-		public static final int level1Encoder = 2500;
-		public static final int level2Encoder = 25000;
-		public static final int level3Encoder = 44500;
-		public static final int level4Encoder = 69500;
+		public static final int level1Encoder = 12500;
+		public static final int level2Encoder = 12500;
+		public static final int level3Encoder = 24500;
+		public static final int level4Encoder = 40700;
+		public static final int alignIdleEncoder = 6500;
+
+		public static final int lowAlgaeEncoder = 21500;
+		public static final int highAlgaeEncoder = 32000;
 	}
 
 	public static class AlgaeConstants {
@@ -81,15 +93,15 @@ public class Constants {
 		public static final int algaeEncoderChannel = 3;
 
 		// 0 degrees
-		public static double algaeDownEncoder = 0.448;
+		public static double algaeDownEncoder = 0.628;
 
 		// 90 degrees
-		public static double algaeUpEncoder = 0.185;
+		public static double algaeUpEncoder = 0.37;
 
-		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
+		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0.0, 0.01, 0);
 		public static ArmFeedforward algaeLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
 
-		public static PIDController emptyLoadArmPID = new PIDController(0, 0, 0);
+		public static PIDController emptyLoadArmPID = new PIDController(0.05, 0, 0);
 		public static PIDController algaeLoadArmPID = new PIDController(0, 0, 0);
 	}
 
@@ -141,5 +153,7 @@ public class Constants {
 
 	public static class VisionConstants {
 		public static String limelightFrontName = "";
+
+		public static PIDController strafeAlignPID = new PIDController(0.135, 0, 0);
 	}
 }
