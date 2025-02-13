@@ -9,22 +9,41 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 
 import static edu.wpi.first.units.Units.*;
 
 public class Constants {
 
+	public static class AlignPositions {
+		public static class RedPositions {
+			// Front right positions
+			public static final Pose2d frontRightLPoseAlignRed = new Pose2d(13.846, 5.068, new Rotation2d(Units.degreesToRadians(60)));
+			public static final Pose2d frontRightRPoseAlignRed = new Pose2d(13.558, 5.212, new Rotation2d(Units.degreesToRadians(60)));
+
+			// Front center positions
+			public static final Pose2d frontCenterLPoseAlignRed = new Pose2d(14.45, 3.91, new Rotation2d(Units.degreesToRadians(0)));
+			public static final Pose2d frontCenterRPoseAlignRed = new Pose2d(14.45, 4.21, new Rotation2d(Units.degreesToRadians(0)));
+			
+			// Front left positions
+			public static final Pose2d frontLeftLPoseAlignRed = new Pose2d(13.5, 2.8, new Rotation2d(Units.degreesToRadians(-60)));
+			public static final Pose2d frontLeftRPoseAlignRed = new Pose2d(13.858, 3.018, new Rotation2d(Units.degreesToRadians(-60)));
+
+			// Back left positions
+			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.551, 2.814, new Rotation2d(Units.degreesToRadians(-120)));
+			public static final Pose2d backLeftRPoseAlignRed = new Pose2d(12.251, 2.970, new Rotation2d(Units.degreesToRadians(-120)));
+
+			public static final Pose2d[][] redFeefPoses = {{frontRightLPoseAlignRed, frontRightRPoseAlignRed}, {frontCenterLPoseAlignRed, frontCenterRPoseAlignRed}, {frontLeftLPoseAlignRed, frontLeftRPoseAlignRed}, {backLeftLPoseAlignRed, backLeftRPoseAlignRed}};
+		}
+	}
+
 	public static class ElevatorConstants {
 		public static final int leftElevatorMotorId = 8;
 		public static final int rightElevatorMotorId = 9;
 
-
-
-
 		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0, 0.03, 0);
-
-
-
 
 		public static final ElevatorFeedforward algaeLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
 

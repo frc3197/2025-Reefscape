@@ -12,6 +12,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -92,6 +95,10 @@ public class Elevator extends SubsystemBase {
     updateNetworkTables();
   }
 
+  public double getTargetHeight() {
+    return targetHeightTicks;
+  }
+
   public double getPositionError() {
     return Math.abs(readEncoder() - targetHeightTicks);
   }
@@ -139,6 +146,13 @@ public class Elevator extends SubsystemBase {
     });
   }
 
+  // Set target height in encoder ticks
+  public Command setTargetHeightCommand(DoubleSupplier value) {
+    return Commands.runOnce(() -> {
+      setTargetHeight(value.getAsDouble());
+    });
+  }
+
   // Check for elevator error
   private void checkError() {
     // If elevator is below height 100, send error status
@@ -170,7 +184,7 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elevator Speed", leftMotor.getVelocity(true).getValueAsDouble());
     SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
 
-    double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.75, 0.95);
+    double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.775, 1);
 
     leftMotor.set(finalSpeed);
     rightMotor.set(finalSpeed);

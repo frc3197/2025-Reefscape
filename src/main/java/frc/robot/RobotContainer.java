@@ -14,10 +14,12 @@ import org.json.simple.parser.ParseException;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.FileVersionException;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -28,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Align;
@@ -121,14 +124,30 @@ public class RobotContainer {
                                 -driverController.getLeftX()))));
 
         driverController.leftTrigger().onTrue(
-            elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder).andThen(Commands.runOnce(() -> {
-                    align.alignReefRough(AlignRequestType.LEFT_REEF_ALIGN);
-                })));
+                elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder)
+                        .andThen(Commands.runOnce(() -> {
+                            align.alignReefRough(AlignRequestType.LEFT_REEF_ALIGN);
+                        })));
         driverController.rightTrigger().onTrue(
-            elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder).andThen(Commands.runOnce(() -> {
-                    align.alignReefRough(AlignRequestType.RIGHT_REEF_ALIGN);
-                })));
-        driverController.leftBumper().whileTrue(align.alignReefFine());
+                elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder)
+                        .andThen(Commands.runOnce(() -> {
+                            align.alignReefRough(AlignRequestType.RIGHT_REEF_ALIGN);
+                        })));
+        operatorController.back().onTrue(elevator.setTargetHeightCommand(() -> {return elevator.getTargetHeight() + 2500;}));
+
+        /*
+         * driverController.leftTrigger().whileTrue(Commands.run(() -> {
+         * align.runCustomAlign(AlignRequestType.LEFT_REEF_ALIGN);
+         * }));
+         * 
+         * driverController.rightTrigger().whileTrue(Commands.run(() -> {
+         * align.runCustomAlign(AlignRequestType.RIGHT_REEF_ALIGN);
+         * }));
+         */
+
+        driverController.leftBumper().whileTrue(Commands.run(() -> {
+            drivetrain.driveRobotRelative(new ChassisSpeeds(0.55, 0.0, 0));
+        }));
         driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         // -------------------------------------------------------------------------
@@ -145,8 +164,8 @@ public class RobotContainer {
          * })).onFalse(elevator.getManualCommand(0.0));
          */
 
-        //driverController.y().onTrue(elevator.getManualCommand(0.5)).onFalse(elevator.getManualCommand(0.0));
-        //driverController.a().onTrue(elevator.getManualCommand(-0.4)).onFalse(elevator.getManualCommand(0.0));
+        // driverController.y().onTrue(elevator.getManualCommand(0.5)).onFalse(elevator.getManualCommand(0.0));
+        // driverController.a().onTrue(elevator.getManualCommand(-0.4)).onFalse(elevator.getManualCommand(0.0));
 
         operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder));
         operatorController.y().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder));
@@ -187,25 +206,19 @@ public class RobotContainer {
         operatorController.povLeft().onTrue(getAlgaeIntakeStagedCommand());
         driverController.y().onTrue(getAlgaeHighCommand());
 
-        /*
-         * // Run SysId routines when holding back/start and X/Y.
-         * // Note that each routine should be run exactly once in a single log.
-         * driverController.back().and(driverController.y()).whileTrue(drivetrain.
-         * sysIdDynamic(Direction.kForward));
-         * driverController.back().and(driverController.x()).whileTrue(drivetrain.
-         * sysIdDynamic(Direction.kReverse));
-         * driverController.start().and(driverController.y()).whileTrue(drivetrain.
-         * sysIdQuasistatic(Direction.kForward));
-         * driverController.start().and(driverController.x()).whileTrue(drivetrain.
-         * sysIdQuasistatic(Direction.kReverse));
-         */
+        // Run SysId routines when holding back/start and X/Y.
+        // Note that each routine should be run exactly once in a single log.
+        extraController.back().and(extraController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        extraController.back().and(extraController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        extraController.start().and(extraController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        extraController.start().and(extraController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         drivetrain.registerTelemetry(logger::telemeterize);
 
         // EXTRA TESTING COMMANDS
         // -----------------------------------------------------------------
-        extraController.y().onTrue(getScoreSequenceL4Command());
-        extraController.a().onTrue(align.alignReefFine());
+        // extraController.y().onTrue(getScoreSequenceL4Command());
+        // extraController.a().onTrue(align.alignReefFine());
 
         // AUTOMATED SEQUENCE ----------------------------------------------------
         operatorController.rightTrigger().onTrue(getAlgaeIntakeFloorCommand());
@@ -371,12 +384,16 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        CommandScheduler.getInstance().schedule(elevator.getEncoderResetCommand());
-
-        return new SequentialCommandGroup(
-                drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
-                drivetrain.runOnce(() -> drivetrain.resetNewPose(new Pose2d(2, 6, new Rotation2d(0)))),
-                autoLookup.getAuto());
+        /*
+         * CommandScheduler.getInstance().schedule(elevator.getEncoderResetCommand());
+         * 
+         * return new SequentialCommandGroup(
+         * drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
+         * drivetrain.runOnce(() -> drivetrain.resetNewPose(new Pose2d(2, 6, new
+         * Rotation2d(0)))),
+         * autoLookup.getAuto());
+         */
+        return new PathPlannerAuto("FarAuto");
     }
 
     public static Command getScoreSequenceL4Command() {
@@ -450,7 +467,8 @@ public class RobotContainer {
                         .andThen(new WaitCommand(0.5))
                         .andThen(algae.setTargetAngleDegrees(50))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder - 5000))
-                        .andThen(new WaitCommand(0.5)).andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
+                        .andThen(new WaitCommand(0.5))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }
 
     public static Command getAlgaeHighCommand() {
@@ -466,6 +484,7 @@ public class RobotContainer {
                         .andThen(new WaitCommand(0.5))
                         .andThen(algae.setTargetAngleDegrees(50))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.highAlgaeEncoder - 5000))
-                        .andThen(new WaitCommand(0.5)).andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
+                        .andThen(new WaitCommand(0.5))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }
 }

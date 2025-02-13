@@ -12,7 +12,8 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
+import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
+import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.PIDConstants;
@@ -65,6 +66,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
     private final SwerveRequest.ApplyRobotSpeeds RobotCenteredRequest = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.ApplyFieldSpeeds FieldRelativeRequest = new SwerveRequest.ApplyFieldSpeeds();
 
     // Pose estimator standard deviations
     private static final edu.wpi.first.math.Vector<N3> newStateStdDevs = VecBuilder.fill(0.025, 0.025,
@@ -201,8 +203,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 // feedforwards
                 new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
                                                 // holonomic drive trains
-                        new PIDConstants(1, 0.1, 0.0), // Translation PID constants
-                        new PIDConstants(0.5, 0.0, 0.2) // Rotation PID constants
+                        new PIDConstants(1, 0.0, 0.0), // Translation PID constants
+                        new PIDConstants(1, 0.0, 0.0) // Rotation PID constants
 
                 ),
                 config, // The robot configuration
@@ -409,6 +411,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public void driveRobotRelative(ChassisSpeeds speeds) {
         this.setControl(RobotCenteredRequest.withSpeeds(speeds));
+    }
+
+    public void driveFieldRelative(ChassisSpeeds speeds) {
+        this.setControl(FieldRelativeRequest.withSpeeds(speeds));
     }
 
 }

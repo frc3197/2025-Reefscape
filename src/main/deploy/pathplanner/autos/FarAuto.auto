@@ -5,76 +5,9 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "AlgaeArmUp"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "FarStartToL4"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "AlignFrontLeftL"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "AlignReefFine"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "ScoreSequenceL4"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "FarL4StepBack"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "AlgaeArmDown"
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "AutomaticAlgaeGrab"
-                }
-              },
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "FarL4StepForward"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "AlgaeToStation"
           }
         }
       ]

@@ -6,8 +6,12 @@ package frc.robot.subsystems;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,8 +37,15 @@ public class Align extends SubsystemBase {
   private Command leftAlignCommand = null;
   private Command rightAlignCommand = null;
 
+  private final SwerveRequest.FieldCentric swerveRequest;
+
+  private ChassisSpeeds speeds = new ChassisSpeeds();
+
+  private int alignUpdateSpeedTicker = 0;
+
   public Align(CommandSwerveDrivetrain drive) {
     this.drive = drive;
+    this.swerveRequest = new SwerveRequest.FieldCentric();
   }
 
   @Override
@@ -43,9 +54,10 @@ public class Align extends SubsystemBase {
     SmartDashboard.putNumber("controller angle", RobotContainer.getAlignRequestAngle());
     setAlignCommands();
 
-    if(RobotContainer.getBestAlignCameraTarget()[1] < 0.5) {
-      timesAligned ++;
+    if (RobotContainer.getBestAlignCameraTarget()[1] < 0.5) {
+      timesAligned++;
     }
+
   }
 
   // Returns selected section, adds rumble if changed
@@ -106,6 +118,27 @@ public class Align extends SubsystemBase {
   // Helper function to check if angle is between other angles
   private boolean isBetween(double value, double lower, double upper) {
     return value >= lower && value <= upper;
+  }
+
+  public void runCustomAlign(AlignRequestType request) {
+    int side = 0;
+    if (request == AlignRequestType.RIGHT_REEF_ALIGN) {
+      side = 1;
+    }
+
+    Pose2d targetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][side];
+    Pose2d direction = drive.getNewCurrentPose().relativeTo(targetPose);
+
+    if (alignUpdateSpeedTicker >= 7 || true) {
+      speeds = new ChassisSpeeds(-MathUtil.clamp(direction.getX() * 3, -1, 1),
+          -MathUtil.clamp(direction.getY() * 3, -2, 2),
+          MathUtil.clamp(direction.getRotation().getRadians() / 4, -0.3, 0.3));
+          alignUpdateSpeedTicker = 0;
+    }
+    alignUpdateSpeedTicker ++;
+
+    drive.driveFieldRelative(speeds);
+
   }
 
   public void alignReefRough(AlignRequestType side) {
