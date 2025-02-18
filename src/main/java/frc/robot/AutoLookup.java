@@ -5,6 +5,8 @@
 package frc.robot;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.json.simple.parser.ParseException;
 
@@ -14,11 +16,16 @@ import com.pathplanner.lib.util.FileVersionException;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.commands.AlignReef;
+import frc.robot.enums.AlignRequestType;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Align;
@@ -37,6 +44,9 @@ public class AutoLookup {
     private Elevator elevator;
     private Outtake outtake;
     private Algae algae;
+
+    // 0: "FrontRight", 1: "FrontCenter", 2: "FrontLeft", 3: "BackLeft", 4:
+    // "BackCenter", 5: "BackRight"
 
     public AutoLookup(CommandSwerveDrivetrain drive1, Vision vision1, Align align1, Elevator elevator1,
             Outtake outtake1, Algae algae1) {
@@ -57,40 +67,57 @@ public class AutoLookup {
                 // Algae arm stow
                 algae.setTargetAngleDegrees(65),
 
-                // To reef first piece
-                loadPath("FarStartToL4"),
+                // Move elevator up a bit to get ready
+                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder),
 
-                align.alignReefRoughWithString("FrontLeftL"),
-                // align.alignReefFine(),
+                // Go to first piece, back left R
+                loadPath("FarStartToBackLeftR"),
 
-                elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder),
-
-                Commands.waitUntil(() -> {return elevator.getPositionError() < 100;}),
-
-                align.alignReefFine(),
-
-                new InstantCommand(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0))),
-
+                // Place first piece, back left R
                 RobotContainer.getScoreSequenceL4Command(),
 
-                loadPath("L4ToStation"),
-                RobotContainer.getIntakeCommand(),
-                
-                loadPath("StationToL4"),
-                align.alignReefRoughWithString("FrontLeftR"),
-                // align.alignReefFine(),
-                
-                elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder),
-                
-                Commands.waitUntil(() -> {return elevator.getPositionError() < 100;}),
-                
-                align.alignReefFine(),
-                
-                new InstantCommand(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0))),
-                
+                // Start intaking for second piece but end process after driving & delay
+                RobotContainer.getIntakeCommand().raceWith(
+                        new SequentialCommandGroup(
+                                loadPath("BackLeftRToStation"),
+                                new WaitCommand(0.35))),
+
+                // Move elevator up a bit to get ready
+                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder),
+
+                // Go to second branch, front left L
+                loadPath("StationToFrontLeftL"),
+
+                // Make sure piece is intake and align finely
+                new ParallelCommandGroup(
+                        RobotContainer.getIntakeCommand().withTimeout(1),
+                        new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN, new ChassisSpeeds(1.5, 1.5, 0.75),
+                                new Translation3d(0.05, 0.05, 0.2), 2).withTimeout(1)),
+
+                // Place second piece
                 RobotContainer.getScoreSequenceL4Command(),
-                loadPath("L4ToStation")
-                );
+
+                // Start intaking for third piece but end process after driving & delay
+                RobotContainer.getIntakeCommand().raceWith(
+                        new SequentialCommandGroup(
+                                loadPath("FrontLeftLToStation"),
+                                new WaitCommand(0.35))),
+
+                // Move elevator up a bit to get ready
+                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder),
+
+                // Go to third branch, front left
+                loadPath("StationToFrontLeftR"),
+
+                // Make sure piece is intake and align finely
+                new ParallelCommandGroup(
+                        RobotContainer.getIntakeCommand().withTimeout(1),
+                        new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN, new ChassisSpeeds(1.5, 1.5, 0.75),
+                                new Translation3d(0.05, 0.05, 0.2), 2).withTimeout(1)),
+
+                RobotContainer.getScoreSequenceL4Command()
+
+        );
     }
 
     private Command loadPath(String name) {

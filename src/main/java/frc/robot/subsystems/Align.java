@@ -9,7 +9,9 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -41,7 +43,13 @@ public class Align extends SubsystemBase {
 
   private ChassisSpeeds speeds = new ChassisSpeeds();
 
-  private int alignUpdateSpeedTicker = 0;
+  private PIDController xController = Constants.AlignConstants.xController;
+  private PIDController yController = Constants.AlignConstants.yController;
+  private PIDController thetaController = Constants.AlignConstants.thetaController;
+
+  private double xError = 0.05;
+  private double yError = 0.05;
+  private double thetaError = 0.1;
 
   public Align(CommandSwerveDrivetrain drive) {
     this.drive = drive;
@@ -115,38 +123,77 @@ public class Align extends SubsystemBase {
     rightAlignCommand = drive.alignReef(pathName.concat("R"));
   }
 
+  public Command alignBarge() {
+    return drive.pathfindToPose(
+        RobotContainer.isRed() ? Constants.AlgaeConstants.redBargePose : Constants.AlgaeConstants.blueBargePose);
+  }
+
   // Helper function to check if angle is between other angles
   private boolean isBetween(double value, double lower, double upper) {
     return value >= lower && value <= upper;
   }
 
-  public void runCustomAlign(AlignRequestType request) {
+  public boolean runCustomAlign(AlignRequestType request, ChassisSpeeds maximumSpeeds, Translation3d goalErrors,
+      int section) {
+
+    if (section != -1) {
+      for (int i = 0; i < 50; i++) {
+        System.out.println("Overriding section: " + section);
+      }
+      requestedAlignSection = section;
+    }
+
     int side = 0;
     if (request == AlignRequestType.RIGHT_REEF_ALIGN) {
       side = 1;
     }
 
-    Pose2d targetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][side];
-    Pose2d direction = drive.getNewCurrentPose().relativeTo(targetPose);
+    double maxSpeedX = Math.abs(maximumSpeeds.vxMetersPerSecond);
+    double maxSpeedY = Math.abs(maximumSpeeds.vyMetersPerSecond);
+    double maxSpeedTheta = Math.abs(maximumSpeeds.omegaRadiansPerSecond);
 
-    if (alignUpdateSpeedTicker >= 7 || true) {
-      speeds = new ChassisSpeeds(-MathUtil.clamp(direction.getX() * 3, -1, 1),
-          -MathUtil.clamp(direction.getY() * 3, -2, 2),
-          MathUtil.clamp(direction.getRotation().getRadians() / 4, -0.3, 0.3));
-          alignUpdateSpeedTicker = 0;
+    Pose2d targetPose;
+
+    if (RobotContainer.isRed()) {
+      targetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][side];
+    } else {
+      targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][side];
     }
-    alignUpdateSpeedTicker ++;
+
+    Pose2d pose = drive.getNewCurrentPose();
+
+    double xAlignSpeed = MathUtil.clamp(xController.calculate(pose.getX(), targetPose.getX()), -maxSpeedX, maxSpeedX);
+    double yAlignSpeed = MathUtil.clamp(yController.calculate(pose.getY(), targetPose.getY()), -maxSpeedY, maxSpeedY);
+    double thetaAlignSpeed = MathUtil.clamp(
+        thetaController.calculate(pose.getRotation().getRadians(), targetPose.getRotation().getRadians()),
+        -maxSpeedTheta, maxSpeedTheta);
+
+    if (Math.abs(pose.getX() - targetPose.getX()) < goalErrors.getX()) {
+      xAlignSpeed = 0.0;
+    }
+
+    if (Math.abs(pose.getY() - targetPose.getY()) < goalErrors.getY()) {
+      yAlignSpeed = 0.0;
+    }
+
+    if (Math.abs(pose.getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors.getZ()) {
+      thetaAlignSpeed = 0.0;
+    }
+
+    speeds = new ChassisSpeeds(xAlignSpeed, yAlignSpeed, thetaAlignSpeed);
 
     drive.driveFieldRelative(speeds);
 
+    return xAlignSpeed == 0.0 && yAlignSpeed == 0.0 && thetaAlignSpeed == 0.0;
   }
 
   public void alignReefRough(AlignRequestType side) {
 
     if (side == AlignRequestType.LEFT_REEF_ALIGN)
-      CommandScheduler.getInstance().schedule(leftAlignCommand.andThen(alignReefFine()));
+      CommandScheduler.getInstance().schedule(leftAlignCommand.andThen(alignReefColor()));
     else
-      CommandScheduler.getInstance().schedule(rightAlignCommand.andThen(alignReefFine()));
+      CommandScheduler.getInstance().schedule(rightAlignCommand.andThen(alignReefColor()));
+
   }
 
   // Align reef command
@@ -160,7 +207,7 @@ public class Align extends SubsystemBase {
         })));
   };
 
-  public Command alignReefFine() {
+  public Command alignReefColor() {
     return Commands.runOnce(() -> {
       RobotContainer.setRobotMode(RobotMode.ALIGN_REEF_FINE);
     }).andThen(Commands.run(() -> {

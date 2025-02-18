@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "FarStartToL4"
+            "pathName": "FarStartToBackLeftR"
           }
         },
         {
@@ -31,7 +31,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L4ToStation"
+            "pathName": "BackLeftRToStation"
           }
         }
       ]

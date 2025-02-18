@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -52,6 +53,9 @@ public class Elevator extends SubsystemBase {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
   private final NetworkTable driveStateTable = inst.getTable("Elevator");
   private final DoublePublisher elevatorEncoderTopic = driveStateTable.getDoubleTopic("ElevatorEncoder").publish();
+
+  private final SlewRateLimiter leftFilter = new SlewRateLimiter(Constants.ElevatorConstants.elevatorSlewRate);
+  private final SlewRateLimiter rightFilter = new SlewRateLimiter(Constants.ElevatorConstants.elevatorSlewRate);
 
   public Elevator() {
 
@@ -186,8 +190,8 @@ public class Elevator extends SubsystemBase {
 
     double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.775, 1);
 
-    leftMotor.set(finalSpeed);
-    rightMotor.set(finalSpeed);
+    leftMotor.set(leftFilter.calculate(finalSpeed));
+    rightMotor.set(rightFilter.calculate(finalSpeed));
   }
 
   // Send values over network table topics

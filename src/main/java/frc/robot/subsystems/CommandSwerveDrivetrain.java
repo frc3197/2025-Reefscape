@@ -19,6 +19,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
 
@@ -71,7 +72,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     // Pose estimator standard deviations
     private static final edu.wpi.first.math.Vector<N3> newStateStdDevs = VecBuilder.fill(0.025, 0.025,
             Units.degreesToRadians(0.05));
-    private static final edu.wpi.first.math.Vector<N3> newVisionMeasurementStdDevs = VecBuilder.fill(0.1, 0.1,
+    private static final edu.wpi.first.math.Vector<N3> newVisionMeasurementStdDevs = VecBuilder.fill(0.17, 0.17,
             Units.degreesToRadians(0.5));
 
     // Pose estimator, field image
@@ -166,7 +167,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 newStateStdDevs,
                 newVisionMeasurementStdDevs);
 
-        //RobotContainer.addNamedCommands();
+        // RobotContainer.addNamedCommands();
 
         configureAutoBuilder();
     }
@@ -195,7 +196,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (speeds, feedforwards) -> this
                         .setControl(RobotCenteredRequest.withSpeeds(new ChassisSpeeds(speeds.vxMetersPerSecond,
                                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond))), // Method that will drive
-                                                                                            // the
+                                                                                           // the
                 // robot given ROBOT RELATIVE
                 // ChassisSpeeds. Also
                 // optionally outputs
@@ -407,6 +408,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // constraints,
         // 1.0 // Goal end velocity in meters/sec
         // );
+    }
+
+    public Command pathfindToPose(Pose2d targetPose) {
+        // Create the constraints to use while pathfinding
+        PathConstraints constraints = new PathConstraints(
+                2.5, 3.0,
+                Units.degreesToRadians(540), Units.degreesToRadians(720));
+
+        // Since AutoBuilder is configured, we can use it to build pathfinding commands
+        return AutoBuilder.pathfindToPose(
+                targetPose,
+                constraints,
+                0.25 // Goal end velocity in meters/sec
+        );
     }
 
     public void driveRobotRelative(ChassisSpeeds speeds) {

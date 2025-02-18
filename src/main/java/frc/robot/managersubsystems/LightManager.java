@@ -44,7 +44,7 @@ public class LightManager extends SubsystemBase {
       return;
     }
 
-    if (RobotContainer.getEnabled() && RobotContainer.hasAlerts()) {
+    if (RobotContainer.getEnabled() && RobotContainer.getRobotMode() != RobotMode.NONE) {
       checkModeLights();
       return;
     }
@@ -242,6 +242,14 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
+  private void patternSetAlignCustom() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 10, 120, 35);
+    }
+    led.setData(buffer);
+  }
+
   private void checkModeLights() {
     if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_ROUGH) {
       patternSetAlignRough();
@@ -249,8 +257,10 @@ public class LightManager extends SubsystemBase {
     } else if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_FINE) {
       patternSetAlignFine();
       return;
+    } else if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_CUSTOM) {
+      patternSetAlignCustom();
+      return;
     } else {
-      turnOffLights();
       return;
     }
   }

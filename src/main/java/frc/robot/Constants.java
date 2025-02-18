@@ -24,18 +24,54 @@ public class Constants {
 			public static final Pose2d frontRightRPoseAlignRed = new Pose2d(13.558, 5.212, new Rotation2d(Units.degreesToRadians(60)));
 
 			// Front center positions
-			public static final Pose2d frontCenterLPoseAlignRed = new Pose2d(14.45, 3.91, new Rotation2d(Units.degreesToRadians(0)));
-			public static final Pose2d frontCenterRPoseAlignRed = new Pose2d(14.45, 4.21, new Rotation2d(Units.degreesToRadians(0)));
+			public static final Pose2d frontCenterLPoseAlignRed = new Pose2d(14.45, 3.91, new Rotation2d(Units.degreesToRadians(180)));
+			public static final Pose2d frontCenterRPoseAlignRed = new Pose2d(14.45, 4.21, new Rotation2d(Units.degreesToRadians(180)));
 			
 			// Front left positions
-			public static final Pose2d frontLeftLPoseAlignRed = new Pose2d(13.5, 2.8, new Rotation2d(Units.degreesToRadians(-60)));
-			public static final Pose2d frontLeftRPoseAlignRed = new Pose2d(13.858, 3.018, new Rotation2d(Units.degreesToRadians(-60)));
+			public static final Pose2d frontLeftLPoseAlignRed = new Pose2d(13.49, 2.92, new Rotation2d(Units.degreesToRadians(120)));
+			public static final Pose2d frontLeftRPoseAlignRed = new Pose2d(13.78, 3.24, new Rotation2d(Units.degreesToRadians(120)));
 
 			// Back left positions
 			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.551, 2.814, new Rotation2d(Units.degreesToRadians(-120)));
 			public static final Pose2d backLeftRPoseAlignRed = new Pose2d(12.251, 2.970, new Rotation2d(Units.degreesToRadians(-120)));
 
-			public static final Pose2d[][] redFeefPoses = {{frontRightLPoseAlignRed, frontRightRPoseAlignRed}, {frontCenterLPoseAlignRed, frontCenterRPoseAlignRed}, {frontLeftLPoseAlignRed, frontLeftRPoseAlignRed}, {backLeftLPoseAlignRed, backLeftRPoseAlignRed}};
+			// Back center positions
+			public static final Pose2d backCenterLPoseAlignRed = new Pose2d(11.760, 4.193, new Rotation2d(Units.degreesToRadians(0)));
+			public static final Pose2d backCenterRPoseAlignRed = new Pose2d(11.760, 2.970, new Rotation2d(Units.degreesToRadians(0)));
+
+			// Back right positions
+			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.275, 5.080, new Rotation2d(Units.degreesToRadians(-60)));
+			public static final Pose2d backRightRPoseAlignRed = new Pose2d(12.563, 5.236, new Rotation2d(Units.degreesToRadians(-60)));
+
+			public static final Pose2d[][] redFeefPoses = {{frontRightLPoseAlignRed, frontRightRPoseAlignRed}, {frontCenterLPoseAlignRed, frontCenterRPoseAlignRed}, {frontLeftLPoseAlignRed, frontLeftRPoseAlignRed}, {backLeftLPoseAlignRed, backLeftRPoseAlignRed}, {backCenterLPoseAlignRed, backCenterRPoseAlignRed}, {backRightLPoseAlignRed, backRightRPoseAlignRed}};
+		}
+
+		public static class BluePositions {
+			// Front right positions
+			public static final Pose2d frontRightLPoseAlignBlue = new Pose2d(3.680, 2.970, new Rotation2d(Units.degreesToRadians(60)));
+			public static final Pose2d frontRightRPoseAlignBlue = new Pose2d(3.980, 2.814, new Rotation2d(Units.degreesToRadians(60)));
+
+			// Front center positions
+			public static final Pose2d frontCenterLPoseAlignBlue = new Pose2d(3.177, 4.193, new Rotation2d(Units.degreesToRadians(180)));
+			public static final Pose2d frontCenterRPoseAlignBlue = new Pose2d(3.177, 3.857, new Rotation2d(Units.degreesToRadians(180)));
+			
+			// Front left positions
+			public static final Pose2d frontLeftLPoseAlignBlue = new Pose2d(3.992, 5.2240, new Rotation2d(Units.degreesToRadians(120)));
+			public static final Pose2d frontLeftRPoseAlignBlue = new Pose2d(3.704, 5.056, new Rotation2d(Units.degreesToRadians(120)));
+
+			// Back left positions
+			public static final Pose2d backLeftLPoseAlignBlue = new Pose2d(4.975, 5.224, new Rotation2d(Units.degreesToRadians(-120)));
+			public static final Pose2d backLeftRPoseAlignBlue = new Pose2d(5.287, 5.068, new Rotation2d(Units.degreesToRadians(-120)));
+
+			// Back center positions
+			public static final Pose2d backCenterLPoseAlignBlue = new Pose2d(5.802, 4.181, new Rotation2d(Units.degreesToRadians(0)));
+			public static final Pose2d backCenterRPoseAlignBlue = new Pose2d(5.802, 3.845, new Rotation2d(Units.degreesToRadians(0)));
+
+			// Back right positions
+			public static final Pose2d backRightLPoseAlignBlue = new Pose2d(5.287, 2.982, new Rotation2d(Units.degreesToRadians(-60)));
+			public static final Pose2d backRightRPoseAlignBlue = new Pose2d(4.987, 2.814, new Rotation2d(Units.degreesToRadians(-60)));
+
+			public static final Pose2d[][] blueFeefPoses = {{frontRightLPoseAlignBlue, frontRightRPoseAlignBlue}, {frontCenterLPoseAlignBlue, frontCenterRPoseAlignBlue}, {frontLeftLPoseAlignBlue, frontLeftRPoseAlignBlue}, {backLeftLPoseAlignBlue, backLeftRPoseAlignBlue}, {backCenterLPoseAlignBlue, backCenterRPoseAlignBlue}, {backRightLPoseAlignBlue, backRightRPoseAlignBlue}};
 		}
 	}
 
@@ -52,18 +88,18 @@ public class Constants {
 
 		public static final TalonFXConfiguration leftElevatorMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(40))
+						.withStatorCurrentLimit(Amps.of(25))
 						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(40))
+						.withSupplyCurrentLimit(Amps.of(25))
 						.withSupplyCurrentLimitEnable(true))
 				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
 
 		public static final TalonFXConfiguration rightElevatorMotorConfig = new TalonFXConfiguration()
 				.withCurrentLimits(
 						new CurrentLimitsConfigs()
-								.withStatorCurrentLimit(Amps.of(40))
+								.withStatorCurrentLimit(Amps.of(25))
 								.withStatorCurrentLimitEnable(true)
-								.withSupplyCurrentLimit(Amps.of(40))
+								.withSupplyCurrentLimit(Amps.of(25))
 								.withSupplyCurrentLimitEnable(true))
 				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
@@ -87,6 +123,8 @@ public class Constants {
 
 		public static final int lowAlgaeEncoder = 21500;
 		public static final int highAlgaeEncoder = 32000;
+
+		public static final double elevatorSlewRate = 0.2;
 	}
 
 	public static class AlgaeConstants {
@@ -122,6 +160,9 @@ public class Constants {
 
 		public static PIDController emptyLoadArmPID = new PIDController(0.05, 0, 0);
 		public static PIDController algaeLoadArmPID = new PIDController(0, 0, 0);
+
+		public static Pose2d redBargePose = new Pose2d(10.48, 1.819, new Rotation2d(10));
+		public static Pose2d blueBargePose = new Pose2d(7.181, 6.123, new Rotation2d(10));
 	}
 
 	public static class IntakeConstants {
@@ -172,7 +213,13 @@ public class Constants {
 
 	public static class VisionConstants {
 		public static String limelightFrontName = "";
-
+		
 		public static PIDController strafeAlignPID = new PIDController(0.135, 0, 0);
+	}
+
+	public static class AlignConstants {
+		public static PIDController xController = new PIDController(1, 0, 0);
+		public static PIDController yController = new PIDController(1, 0, 0);
+		public static PIDController thetaController = new PIDController(1, 0, 0);
 	}
 }

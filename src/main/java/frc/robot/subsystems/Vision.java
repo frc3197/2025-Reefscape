@@ -37,8 +37,8 @@ public class Vision extends SubsystemBase {
       new Rotation3d(0, 0, Units.degreesToRadians(180))); // Cam mounted facing backward, half a meter forward of
                                                           // center, half a meter up from center.
 
-  private final Transform3d robotToLeft = new Transform3d(new Translation3d(Units.inchesToMeters(10.75), Units.inchesToMeters(-12.25), Units.inchesToMeters(8.75)),
-      new Rotation3d(0, Units.degreesToRadians(5), Units.degreesToRadians(35)));
+  private final Transform3d robotToLeft = new Transform3d(new Translation3d(Units.inchesToMeters(3.25), Units.inchesToMeters(-12.25), Units.inchesToMeters(8.75)),
+      new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(14)));
   private final Transform3d robotToRight = new Transform3d(new Translation3d(0.15, 0.0, 0.2),
       new Rotation3d(0, 0, Units.degreesToRadians(0)));
   private final PhotonPoseEstimator backEstimator;
