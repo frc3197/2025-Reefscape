@@ -190,8 +190,8 @@ public class Elevator extends SubsystemBase {
 
     double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.775, 1);
 
-    leftMotor.set(leftFilter.calculate(finalSpeed));
-    rightMotor.set(rightFilter.calculate(finalSpeed));
+    leftMotor.set(finalSpeed);
+    rightMotor.set(finalSpeed);
   }
 
   // Send values over network table topics

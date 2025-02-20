@@ -157,10 +157,10 @@ public class RobotContainer {
          */
 
         driverController.leftTrigger().whileTrue(new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
-                new ChassisSpeeds(1.5, 1.5, 0.75), new Translation3d(0.1, 0.1, 0.2)));
+                new ChassisSpeeds(1.85, 1.5, 1.65), new Translation3d(0.05, 0.05, 0.01)));
 
         driverController.rightTrigger().whileTrue(new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
-                new ChassisSpeeds(1.5, 1.5, 0.75), new Translation3d(0.1, 0.1, 0.2)));
+                new ChassisSpeeds(1.85, 1.5, 1.65), new Translation3d(0.05, 0.05, 0.01)));
 
         /*
          * // Brake
@@ -168,7 +168,7 @@ public class RobotContainer {
          * drivetrain.driveRobotRelative(new ChassisSpeeds(0.55, 0.0, 0));
          * }));
          */
-        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()).andThen(() -> drivetrain.getPigeon2().reset()));
 
         // -------------------------------------------------------------------------
         // Elevator bindings
@@ -218,7 +218,7 @@ public class RobotContainer {
         driverController.povUp().onTrue(algae.setDeploySpeedCommand(0.3)).onFalse(algae.setDeploySpeedCommand(0.0));
         driverController.povDown().onTrue(algae.setDeploySpeedCommand(-0.3)).onFalse(algae.setDeploySpeedCommand(0.0));
 
-        operatorController.povUp().onTrue(algae.setTargetAngleDegrees(60));
+        operatorController.povUp().onTrue(algae.setTargetAngleDegrees(90));
         operatorController.povRight().onTrue(algae.setTargetAngleDegrees(10));
         operatorController.povDown().onTrue(algae.setTargetAngleDegrees(-5));
 
@@ -351,19 +351,17 @@ public class RobotContainer {
 
     public static Command getIntakeCommand() {
         return new SequentialCommandGroup(
-                elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder),
+                //elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder),
                 outtake.feedOuttake(0.5),
-                Commands.waitUntil(outtake.isBridgingSupplier()),
-                outtake.feedOuttake(0.2),
-                Commands.waitUntil(() -> {
-                    return !outtake.isBridgingSupplier().getAsBoolean();
-                }),
+                Commands.waitUntil(outtake.detectsCoralSupplier()),
+                outtake.feedOuttake(0.08),
+                Commands.waitUntil(() -> {return !outtake.detectsCoralSupplier().getAsBoolean();}),
                 new InstantCommand(() -> {
                     if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
                         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 1.5));
                     }
                 }),
-                outtake.feedOuttake(-0.1),
+                outtake.feedOuttake(-0.15),
                 new WaitCommand(0.1),
                 outtake.feedOuttake(0.0));
     }
@@ -372,12 +370,12 @@ public class RobotContainer {
 
         return new SequentialCommandGroup(
                 elevator.getEncoderResetCommand(),
-                drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
+                drivetrain.runOnce(() -> drivetrain.seedFieldCentric()).andThen(() -> drivetrain.getPigeon2().reset()),
 
                 // Set pose, better and more reliable than vision for now in case of miss
                 drivetrain.runOnce(() -> {
                     if (isRed())
-                        drivetrain.resetNewPose(new Pose2d(10.309, 3.102, new Rotation2d(0)));
+                        drivetrain.resetNewPose(new Pose2d(10.321, 2.694, new Rotation2d(Units.degreesToRadians(180))));
                     else
                         drivetrain.resetNewPose(new Pose2d(7.241, 4.93, new Rotation2d(Units.degreesToRadians(180))));
                 }),
@@ -388,7 +386,7 @@ public class RobotContainer {
 
     public static Command getScoreSequenceL4Command() {
         return elevator
-                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder).andThen(Commands.waitUntil(() -> {
+                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder+750).andThen(Commands.waitUntil(() -> {
                     return elevator.getPositionError() < 250;
                 }).withTimeout(2)).andThen(outtake.feedOuttake(0.8)).andThen(new WaitCommand(0.5)).andThen(elevator
                         .setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))

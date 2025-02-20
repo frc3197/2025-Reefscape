@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -37,10 +38,11 @@ public class Vision extends SubsystemBase {
       new Rotation3d(0, 0, Units.degreesToRadians(180))); // Cam mounted facing backward, half a meter forward of
                                                           // center, half a meter up from center.
 
-  private final Transform3d robotToLeft = new Transform3d(new Translation3d(Units.inchesToMeters(3.25), Units.inchesToMeters(-12.25), Units.inchesToMeters(8.75)),
-      new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(14)));
-  private final Transform3d robotToRight = new Transform3d(new Translation3d(0.15, 0.0, 0.2),
-      new Rotation3d(0, 0, Units.degreesToRadians(0)));
+  private final Transform3d robotToLeft = new Transform3d(new Translation3d(Units.inchesToMeters(4), Units.inchesToMeters(-11.25), Units.inchesToMeters(8.75)),
+      new Rotation3d(0, Units.degreesToRadians(40), Units.degreesToRadians(10)));
+
+  private final Transform3d robotToRight = new Transform3d(new Translation3d(Units.inchesToMeters(5), Units.inchesToMeters(11.25), Units.inchesToMeters(8.75)),
+      new Rotation3d(0, Units.degreesToRadians(40), Units.degreesToRadians(-4)));
   private final PhotonPoseEstimator backEstimator;
   private final PhotonPoseEstimator leftEstimator;
   private final PhotonPoseEstimator rightEstimator;
@@ -98,7 +100,7 @@ public class Vision extends SubsystemBase {
 
   // Returns time, needs to be fixed
   private double getLimelightTime() {
-    return Timer.getFPGATimestamp();
+    return Timer.getTimestamp();
     
      /*return Utils.fpgaToCurrentTime(Timer.getTimestamp()
      - (LimelightHelpers.getLatency_Pipeline("") / 1000.0)
@@ -145,17 +147,16 @@ public class Vision extends SubsystemBase {
       drive.addNewVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds());
     }
 
-    if (rightHasTargets && false) {
+    if (rightHasTargets) {
       PhotonTrackedTarget target = rightResult.getBestTarget();
 
       // Get information from target
       int targetID = target.getFiducialId();
       double poseAmbiguity = target.getPoseAmbiguity();
-      Transform3d bestCameraToTarget = target.getBestCameraToTarget();
-      Transform3d alternateCameraToTarget = target.getAlternateCameraToTarget();
 
-      drive.addNewVisionMeasurement(new Pose2d(bestCameraToTarget.getX(), bestCameraToTarget.getY(),
-          bestCameraToTarget.getRotation().toRotation2d()), Timer.getFPGATimestamp());
+      Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(target.getBestCameraToTarget(), aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToRight);
+
+      drive.addNewVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds());
     }
   }
 

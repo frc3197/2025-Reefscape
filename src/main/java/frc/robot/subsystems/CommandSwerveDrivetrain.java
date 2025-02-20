@@ -9,6 +9,7 @@ import org.json.simple.parser.ParseException;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -73,7 +74,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final edu.wpi.first.math.Vector<N3> newStateStdDevs = VecBuilder.fill(0.025, 0.025,
             Units.degreesToRadians(0.05));
     private static final edu.wpi.first.math.Vector<N3> newVisionMeasurementStdDevs = VecBuilder.fill(0.17, 0.17,
-            Units.degreesToRadians(0.5));
+            Units.degreesToRadians(0.15));
 
     // Pose estimator, field image
     private final SwerveDrivePoseEstimator newPoseEstimator;
@@ -341,6 +342,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         m_poseArray[2] = getNewCurrentPose().getRotation().getDegrees();
 
         SmartDashboard.putNumberArray("PoseWithVision", m_poseArray);
+        SmartDashboard.putNumber("Pigeon rotation", getPigeon2().getYaw().getValueAsDouble());
 
         newPoseEstimator.updateWithTime(Timer.getFPGATimestamp(),
                 getPigeon2().getRotation2d(),

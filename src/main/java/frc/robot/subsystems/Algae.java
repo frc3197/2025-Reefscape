@@ -58,7 +58,7 @@ public class Algae extends SubsystemBase {
   private final ArmFeedforward emptyArmFeedForward;
   private final PIDController algaeArmPID;
   private final ArmFeedforward algaeArmFeedForward;
-  private double targetAlgaeAngle = 45;
+  private double targetAlgaeAngle = 85;
 
   public Algae() {
 
@@ -181,7 +181,8 @@ public class Algae extends SubsystemBase {
 
   // Returns arm angle in degrees from encoder ticks
   public double convertTicksToDegrees(double ticks) {
-    return ((Constants.AlgaeConstants.algaeDownEncoder - ticks) / Constants.AlgaeConstants.algaeUpEncoder) * (90);
+    return 90 - ( (ticks - Constants.AlgaeConstants.algaeUpEncoder) * 90.0 / (Constants.AlgaeConstants.algaeDownEncoder - Constants.AlgaeConstants.algaeUpEncoder)); 
+    //return ((Constants.AlgaeConstants.algaeDownEncoder - ticks) / Constants.AlgaeConstants.algaeUpEncoder) * (90);
   }
 
   private void updateClosedLoop() {

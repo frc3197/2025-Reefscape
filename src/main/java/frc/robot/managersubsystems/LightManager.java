@@ -261,6 +261,7 @@ public class LightManager extends SubsystemBase {
       patternSetAlignCustom();
       return;
     } else {
+      turnOffLights();
       return;
     }
   }

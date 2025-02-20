@@ -21,7 +21,7 @@ public class Outtake extends SubsystemBase {
 
   private LaserCan outtakeLaserCan;
   private final TalonFX outtakeMotor;
-  private final BooleanSupplier coralBridging;
+  private final BooleanSupplier detectsCoral;
 
   public Outtake() {
 
@@ -30,7 +30,7 @@ public class Outtake extends SubsystemBase {
     outtakeMotor = new TalonFX(Constants.OuttakeConstants.outtakeMotorId);
     outtakeMotor.getConfigurator().apply(Constants.OuttakeConstants.outtakeMotorConfig);
 
-    coralBridging = () -> {
+    detectsCoral = () -> {
       return outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange;
     };
 
@@ -41,12 +41,18 @@ public class Outtake extends SubsystemBase {
 
     SmartDashboard.putNumber("Sensor", outtakeLaserCan.getMeasurement().distance_mm);
 
-    SmartDashboard.putBoolean("Not bridging", !coralBridging.getAsBoolean());
+    SmartDashboard.putBoolean("Has coral", detectsCoral.getAsBoolean());
 
   }
 
-  public BooleanSupplier isBridgingSupplier() {
-    return coralBridging;
+  public BooleanSupplier detectsCoralSupplier() {
+    return detectsCoral;
+  }
+
+  public Command stopMotors() {
+    return Commands.runOnce(() -> {
+      feedOuttake(0);
+    });
   }
 
   public Command feedOuttake(double speed) {

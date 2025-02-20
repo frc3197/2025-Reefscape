@@ -28,8 +28,8 @@ public class Constants {
 			public static final Pose2d frontCenterRPoseAlignRed = new Pose2d(14.45, 4.21, new Rotation2d(Units.degreesToRadians(180)));
 			
 			// Front left positions
-			public static final Pose2d frontLeftLPoseAlignRed = new Pose2d(13.49, 2.92, new Rotation2d(Units.degreesToRadians(120)));
-			public static final Pose2d frontLeftRPoseAlignRed = new Pose2d(13.78, 3.24, new Rotation2d(Units.degreesToRadians(120)));
+			public static final Pose2d frontLeftLPoseAlignRed = new Pose2d(13.47, 2.99, new Rotation2d(Units.degreesToRadians(-60)));
+			public static final Pose2d frontLeftRPoseAlignRed = new Pose2d(13.78, 3.24, new Rotation2d(Units.degreesToRadians(-60)));
 
 			// Back left positions
 			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.551, 2.814, new Rotation2d(Units.degreesToRadians(-120)));
@@ -40,8 +40,8 @@ public class Constants {
 			public static final Pose2d backCenterRPoseAlignRed = new Pose2d(11.760, 2.970, new Rotation2d(Units.degreesToRadians(0)));
 
 			// Back right positions
-			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.275, 5.080, new Rotation2d(Units.degreesToRadians(-60)));
-			public static final Pose2d backRightRPoseAlignRed = new Pose2d(12.563, 5.236, new Rotation2d(Units.degreesToRadians(-60)));
+			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.31, 4.94, new Rotation2d(Units.degreesToRadians(120)));
+			public static final Pose2d backRightRPoseAlignRed = new Pose2d(12.6, 5.05, new Rotation2d(Units.degreesToRadians(120)));
 
 			public static final Pose2d[][] redFeefPoses = {{frontRightLPoseAlignRed, frontRightRPoseAlignRed}, {frontCenterLPoseAlignRed, frontCenterRPoseAlignRed}, {frontLeftLPoseAlignRed, frontLeftRPoseAlignRed}, {backLeftLPoseAlignRed, backLeftRPoseAlignRed}, {backCenterLPoseAlignRed, backCenterRPoseAlignRed}, {backRightLPoseAlignRed, backRightRPoseAlignRed}};
 		}
@@ -116,9 +116,9 @@ public class Constants {
 
 		public static final int loadingStationEncoder = 100;
 		public static final int level1Encoder = 12500;
-		public static final int level2Encoder = 12500;
-		public static final int level3Encoder = 24500;
-		public static final int level4Encoder = 40700;
+		public static final int level2Encoder = 10000;
+		public static final int level3Encoder = 22000;
+		public static final int level4Encoder = 39750;
 		public static final int alignIdleEncoder = 6500;
 
 		public static final int lowAlgaeEncoder = 21500;
@@ -150,10 +150,10 @@ public class Constants {
 		public static final int algaeEncoderChannel = 3;
 
 		// 0 degrees
-		public static double algaeDownEncoder = 0.628;
+		public static double algaeDownEncoder = 0.89;
 
 		// 90 degrees
-		public static double algaeUpEncoder = 0.37;
+		public static double algaeUpEncoder = 0.631;
 
 		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0.0, 0.01, 0);
 		public static ArmFeedforward algaeLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
@@ -196,7 +196,7 @@ public class Constants {
 		public static final int outtakeMotorId = 14;
 		public static final int outtakeLaserCan = 0;
 
-		public static final double sensorRange = 100;
+		public static final double sensorRange = 20;
 
 		public static final double outtakeFeedSpeed = 0.25;
 		public static final double outtakeSpitSpeed = 1;
@@ -218,8 +218,8 @@ public class Constants {
 	}
 
 	public static class AlignConstants {
-		public static PIDController xController = new PIDController(1, 0, 0);
-		public static PIDController yController = new PIDController(1, 0, 0);
-		public static PIDController thetaController = new PIDController(1, 0, 0);
+		public static PIDController xController = new PIDController(6, 0, 0);
+		public static PIDController yController = new PIDController(4, 0, 0);
+		public static PIDController thetaController = new PIDController(7, 0, 0);
 	}
 }

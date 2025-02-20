@@ -31,7 +31,7 @@ import frc.robot.util.AlertBody;
 @SuppressWarnings("unused")
 public class Align extends SubsystemBase {
 
-  private int requestedAlignSection = 1;
+  private int requestedAlignSection = 2;
   private final CommandSwerveDrivetrain drive;
 
   private int timesAligned = 0;
@@ -66,6 +66,22 @@ public class Align extends SubsystemBase {
       timesAligned++;
     }
 
+    Pose2d targetPose;
+
+    if (RobotContainer.isRed()) {
+      targetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][0];
+    } else {
+      targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][0];
+    }
+
+    double[] m_poseArray = new double[3];
+
+    m_poseArray[0] = targetPose.getX();
+    m_poseArray[1] = targetPose.getY();
+    m_poseArray[2] = targetPose.getRotation().getDegrees();
+
+    SmartDashboard.putNumberArray("TargetPose", m_poseArray);
+
   }
 
   // Returns selected section, adds rumble if changed
@@ -90,7 +106,7 @@ public class Align extends SubsystemBase {
     }
     if (oldSection != requestedAlignSection) {
       RobotContainer.addRumble(1, 0.35, 0.15, RumbleType.kBothRumble);
-      setAlignCommands();
+      // setAlignCommands();
     }
 
     return requestedAlignSection;
@@ -119,8 +135,8 @@ public class Align extends SubsystemBase {
       default:
         break;
     }
-    leftAlignCommand = drive.alignReef(pathName.concat("L"));
-    rightAlignCommand = drive.alignReef(pathName.concat("R"));
+    // leftAlignCommand = drive.alignReef(pathName.concat("L"));
+    // rightAlignCommand = drive.alignReef(pathName.concat("R"));
   }
 
   public Command alignBarge() {
@@ -165,7 +181,8 @@ public class Align extends SubsystemBase {
     double xAlignSpeed = MathUtil.clamp(xController.calculate(pose.getX(), targetPose.getX()), -maxSpeedX, maxSpeedX);
     double yAlignSpeed = MathUtil.clamp(yController.calculate(pose.getY(), targetPose.getY()), -maxSpeedY, maxSpeedY);
     double thetaAlignSpeed = MathUtil.clamp(
-        thetaController.calculate(pose.getRotation().getRadians(), targetPose.getRotation().getRadians()),
+        thetaController.calculate(drive.getPigeon2().getRotation2d().getRadians(),
+            targetPose.getRotation().getRadians()),
         -maxSpeedTheta, maxSpeedTheta);
 
     if (Math.abs(pose.getX() - targetPose.getX()) < goalErrors.getX()) {
@@ -176,7 +193,8 @@ public class Align extends SubsystemBase {
       yAlignSpeed = 0.0;
     }
 
-    if (Math.abs(pose.getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors.getZ()) {
+    if (Math.abs(drive.getPigeon2().getRotation2d().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
+        .getZ()) {
       thetaAlignSpeed = 0.0;
     }
 
