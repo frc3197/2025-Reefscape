@@ -8,9 +8,11 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
+import frc.robot.enums.AlertMode;
 import frc.robot.enums.AlignRequestType;
 import frc.robot.enums.RobotMode;
 import frc.robot.subsystems.Align;
+import frc.robot.util.AlertBody;
 
 public class AlignReef extends Command {
 
@@ -57,6 +59,9 @@ public class AlignReef extends Command {
 
   @Override
   public boolean isFinished() {
+    if(aligned) {
+      RobotContainer.addAlert(new AlertBody(AlertMode.FULLY_ALIGNED, 0.5));
+    }
     return aligned;
   }
 }

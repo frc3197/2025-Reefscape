@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.enums.ErrorMode;
@@ -33,12 +34,18 @@ public class LightManager extends SubsystemBase {
   @Override
   public void periodic() {
 
+    if (RobotContainer.getEnabled() && DriverStation.getMatchTime() <= 5.0 && !DriverStation.isAutonomous()) {
+      setCountdownLights();
+      return;
+    }
+
     // Check for errors first
     if (RobotContainer.hasErrors()) {
       checkErrorLights();
       return;
     }
 
+    SmartDashboard.putBoolean("Has Alert", RobotContainer.hasAlert(AlertMode.FULLY_ALIGNED));
     if (RobotContainer.hasAlerts()) {
       checkAlertLights();
       return;
@@ -153,10 +160,11 @@ public class LightManager extends SubsystemBase {
   }
 
   private void patternSetFullyAligned() {
+    System.out.println("Fully aligned");
     if (Timer.getTimestamp() % 0.12 <= 0.06)
       for (int i = 0; i < buffer.getLength(); i++) {
         // Sets the specified LED to the GRB values for red
-        buffer.setRGB(i, 150, 150, 150);
+        buffer.setRGB(i, 255, 255, 0);
       }
     else {
       for (int i = 0; i < buffer.getLength(); i++) {
@@ -264,5 +272,17 @@ public class LightManager extends SubsystemBase {
       turnOffLights();
       return;
     }
+  }
+
+  private void setCountdownLights() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      if (i > buffer.getLength() - (int) Math.floor((DriverStation.getMatchTime() / 5.0) * buffer.getLength()) - 1) {
+        buffer.setRGB(i, 80, 255, 35);
+      } else {
+        buffer.setRGB(i, 0, 0, 0);
+      }
+    }
+    led.setData(buffer);
   }
 }

@@ -97,7 +97,7 @@ public class Algae extends SubsystemBase {
   public Command setTargetAngleDegrees(double angleDegrees) {
     return Commands.runOnce(() -> {
       this.targetAlgaeAngle = angleDegrees;
-    });
+    }, this);
   }
 
   // Manually set grabber speed
@@ -130,11 +130,11 @@ public class Algae extends SubsystemBase {
     return Commands.runOnce(() -> {
       leftGrabberMotor.set(0.85);
       rightGrabberMotor.set(0.85);
-    }).andThen(Commands.waitUntil(hasAlgae()).withTimeout(5)).andThen(() -> {
+    }, this).andThen(Commands.waitUntil(hasAlgae()).withTimeout(5)).andThen(() -> {
       RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
       leftGrabberMotor.set(0);
       rightGrabberMotor.set(0);
-    });
+    }, this);
   }
 
   public BooleanSupplier hasAlgae() {

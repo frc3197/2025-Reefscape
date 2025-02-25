@@ -153,9 +153,6 @@ public class Align extends SubsystemBase {
       int section) {
 
     if (section != -1) {
-      for (int i = 0; i < 50; i++) {
-        System.out.println("Overriding section: " + section);
-      }
       requestedAlignSection = section;
     }
 
@@ -181,7 +178,7 @@ public class Align extends SubsystemBase {
     double xAlignSpeed = MathUtil.clamp(xController.calculate(pose.getX(), targetPose.getX()), -maxSpeedX, maxSpeedX);
     double yAlignSpeed = MathUtil.clamp(yController.calculate(pose.getY(), targetPose.getY()), -maxSpeedY, maxSpeedY);
     double thetaAlignSpeed = MathUtil.clamp(
-        thetaController.calculate(drive.getPigeon2().getRotation2d().getRadians(),
+        thetaController.calculate(drive.getNewCurrentPose().getRotation().getRadians(),
             targetPose.getRotation().getRadians()),
         -maxSpeedTheta, maxSpeedTheta);
 
@@ -193,7 +190,7 @@ public class Align extends SubsystemBase {
       yAlignSpeed = 0.0;
     }
 
-    if (Math.abs(drive.getPigeon2().getRotation2d().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
+    if (Math.abs(drive.getNewCurrentPose().getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
         .getZ()) {
       thetaAlignSpeed = 0.0;
     }

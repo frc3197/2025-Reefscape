@@ -38,11 +38,13 @@ public class Vision extends SubsystemBase {
       new Rotation3d(0, 0, Units.degreesToRadians(180))); // Cam mounted facing backward, half a meter forward of
                                                           // center, half a meter up from center.
 
-  private final Transform3d robotToLeft = new Transform3d(new Translation3d(Units.inchesToMeters(4), Units.inchesToMeters(-11.25), Units.inchesToMeters(8.75)),
-      new Rotation3d(0, Units.degreesToRadians(40), Units.degreesToRadians(10)));
+  private final Transform3d robotToLeft = new Transform3d(
+      new Translation3d(Units.inchesToMeters(-2.75), Units.inchesToMeters(-11), Units.inchesToMeters(7.25)),
+      new Rotation3d(0, Units.degreesToRadians(-63+180), Units.degreesToRadians(-6)));
 
-  private final Transform3d robotToRight = new Transform3d(new Translation3d(Units.inchesToMeters(5), Units.inchesToMeters(11.25), Units.inchesToMeters(8.75)),
-      new Rotation3d(0, Units.degreesToRadians(40), Units.degreesToRadians(-4)));
+  private final Transform3d robotToRight = new Transform3d(
+      new Translation3d(Units.inchesToMeters(-9.75), Units.inchesToMeters(-11), Units.inchesToMeters(7.25)),
+      new Rotation3d(0, Units.degreesToRadians(-63), Units.degreesToRadians(6)));
   private final PhotonPoseEstimator backEstimator;
   private final PhotonPoseEstimator leftEstimator;
   private final PhotonPoseEstimator rightEstimator;
@@ -101,11 +103,13 @@ public class Vision extends SubsystemBase {
   // Returns time, needs to be fixed
   private double getLimelightTime() {
     return Timer.getTimestamp();
-    
-     /*return Utils.fpgaToCurrentTime(Timer.getTimestamp()
-     - (LimelightHelpers.getLatency_Pipeline("") / 1000.0)
-     - (LimelightHelpers.getLatency_Capture("") / 1000.0));*/
-     
+
+    /*
+     * return Utils.fpgaToCurrentTime(Timer.getTimestamp()
+     * - (LimelightHelpers.getLatency_Pipeline("") / 1000.0)
+     * - (LimelightHelpers.getLatency_Capture("") / 1000.0));
+     */
+
   }
 
   // Check photon camera outputs
@@ -142,9 +146,13 @@ public class Vision extends SubsystemBase {
       int targetID = target.getFiducialId();
       double poseAmbiguity = target.getPoseAmbiguity();
 
-      Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(target.getBestCameraToTarget(), aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToLeft);
+      Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(target.getBestCameraToTarget(),
+          aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToLeft);
+      Transform3d robotOffset = target.getBestCameraToTarget();
 
-      drive.addNewVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds());
+      if (Math.sqrt(
+          Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
+        drive.addNewVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds());
     }
 
     if (rightHasTargets) {
@@ -154,9 +162,14 @@ public class Vision extends SubsystemBase {
       int targetID = target.getFiducialId();
       double poseAmbiguity = target.getPoseAmbiguity();
 
-      Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(target.getBestCameraToTarget(), aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToRight);
+      Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(target.getBestCameraToTarget(),
+          aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToRight);
 
-      drive.addNewVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds());
+      Transform3d robotOffset = target.getBestCameraToTarget();
+
+      if (Math.sqrt(
+          Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
+        drive.addNewVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds());
     }
   }
 
