@@ -82,7 +82,8 @@ public class RobotContainer {
     // Controllers
     private final static CommandXboxController driverController = new CommandXboxController(0);
     private final static CommandXboxController operatorController = new CommandXboxController(1);
-    private final static CommandXboxController extraController = new CommandXboxController(2);
+    // private final static CommandXboxController extraController = new
+    // CommandXboxController(2);
     private final static CommandXboxController[] controllers = { driverController, operatorController };
 
     // Robot statuses
@@ -150,6 +151,10 @@ public class RobotContainer {
             return elevator.getTargetHeight() + 2500;
         }));
 
+        operatorController.rightStick().onTrue(elevator.setTargetHeightCommand(() -> {
+            return elevator.getTargetHeight() - 1500;
+        }));
+
         /*
          * driverController.rightStick().whileTrue(new AlignBarge(align)
          * .andThen(new InstantCommand(() -> addAlert(new
@@ -160,7 +165,15 @@ public class RobotContainer {
          * new Translation3d(0.05, 0.05, 0.01), 2).withTimeout(1.2)
          */
 
-        driverController.rightStick().onTrue(outtake.setFeed(-0.1)).onFalse(outtake.setFeed(0.0));
+        driverController.rightStick().onTrue(outtake.setFeed(-0.2)).onFalse(outtake.setFeed(0.0));
+        driverController.leftStick().onTrue(outtake.setFeed(0.28)).onFalse(outtake.setFeed(0.0));
+
+        driverController.leftBumper()
+                .whileTrue(Commands.run(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0.45, 0))))
+                .onFalse(new InstantCommand(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0))));
+        driverController.rightBumper()
+                .whileTrue(Commands.run(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, -0.45, 0))))
+                .onFalse(new InstantCommand(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0))));
 
         driverController.leftTrigger().whileTrue(new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
                 new ChassisSpeeds(0.8, 0.6, 1.65), new Translation3d(0.015, 0.015, 0.01)))
@@ -195,9 +208,11 @@ public class RobotContainer {
         // driverController.y().onTrue(elevator.getManualCommand(0.5)).onFalse(elevator.getManualCommand(0.0));
         // driverController.a().onTrue(elevator.getManualCommand(-0.4)).onFalse(elevator.getManualCommand(0.0));
 
-        operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder));
-        operatorController.y().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder));
-        operatorController.b().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder));
+        operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 750));
+        operatorController.y()
+                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 1500));
+        operatorController.b()
+                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder + 1500));
         operatorController.a()
                 .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
 
@@ -213,7 +228,7 @@ public class RobotContainer {
         // -------------------------------------------------------------------------
         // Outtake bindings
         // -------------------------------------------------------------------------
-        driverController.x().onTrue(outtake.setFeed(0.9)).onFalse(outtake.setFeed(0));
+        driverController.x().onTrue(outtake.setFeed(0.44)).onFalse(outtake.setFeed(0));
 
         // -------------------------------------------------------------------------
         // Algae bindings
@@ -243,21 +258,25 @@ public class RobotContainer {
         // -------------------------------------------------------------------------
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        extraController.back().and(extraController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        extraController.back().and(extraController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        extraController.start().and(extraController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        extraController.start().and(extraController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        // extraController.back().and(extraController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        // extraController.back().and(extraController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        // extraController.start().and(extraController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        // extraController.start().and(extraController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         drivetrain.registerTelemetry(logger::telemeterize);
 
         // -------------------------------------------------------------------------
         // EXTRA TESTING COMMANDS
         // -------------------------------------------------------------------------
-        extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(extraController::getLeftTriggerAxis))
-                .onFalse(climber.setClimberArmSpeed(0));
-        extraController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() -> {
-            return -1 * extraController.getRightTriggerAxis();
-        })).onFalse(climber.setClimberArmSpeed(0));
+        /*
+         * extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
+         * extraController::getLeftTriggerAxis))
+         * .onFalse(climber.setClimberArmSpeed(0));
+         * extraController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() ->
+         * {
+         * return -1 * extraController.getRightTriggerAxis();
+         * })).onFalse(climber.setClimberArmSpeed(0));
+         */
     }
 
     public static double getAlignRequestAngle() {
@@ -404,7 +423,10 @@ public class RobotContainer {
                     if (isRed())
                         drivetrain.resetNewPose(new Pose2d(10.321, 2.694, new Rotation2d(Units.degreesToRadians(180))));
                     else
-                        drivetrain.resetNewPose(new Pose2d(7.229, 5.416, new Rotation2d(Units.degreesToRadians(0))));
+                        /*drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
+                                new Rotation2d(Units.degreesToRadians(0))));*/
+                     drivetrain.resetNewPose(new Pose2d(7.229, 5.416, new
+                     Rotation2d(Units.degreesToRadians(0))));
                 }),
                 autoLookup.getAuto());
 
@@ -418,7 +440,7 @@ public class RobotContainer {
                 })
                 .andThen(Commands.waitUntil(() -> {
                     return elevator.getPositionError() < 250;
-                }).withTimeout(2)).andThen(outtake.feedOuttake(0.8)).andThen(new WaitCommand(0.2)).andThen(elevator
+                }).withTimeout(2)).andThen(outtake.feedOuttake(0.425)).andThen(new WaitCommand(0.22)).andThen(elevator
                         .setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                 .andThen(outtake.feedOuttake(0))
                 .andThen(() -> {
@@ -440,8 +462,8 @@ public class RobotContainer {
     }
 
     public static Command getAlgaeScoreBargeCommand() {
-        return algae.setTargetAngleDegrees(68)
-                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 1000))
+        return algae.setTargetAngleDegrees(75)
+                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 2200))
                 .andThen(Commands.waitUntil(() -> {
                     return elevator.getPositionError() < 400;
                 })).andThen(algae.setAlgaeGrabberSpeedCommand(-0.75)).andThen(Commands.waitSeconds(0.07))

@@ -38,10 +38,10 @@ public class Constants {
 					new Rotation2d(Units.degreesToRadians(124)));
 
 			// Back left positions
-			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.53, 2.88,
-					new Rotation2d(Units.degreesToRadians(60)));
-			public static final Pose2d backLeftRPoseAlignRed = new Pose2d(12.31, 3.11,
-					new Rotation2d(Units.degreesToRadians(60)));
+			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.56, 2.84,
+					new Rotation2d(Units.degreesToRadians(65)));
+			public static final Pose2d backLeftRPoseAlignRed = new Pose2d(12.33, 3.06,
+					new Rotation2d(Units.degreesToRadians(62)));
 
 			// Back center positions
 			public static final Pose2d backCenterLPoseAlignRed = new Pose2d(11.8, 3.87,
@@ -77,16 +77,16 @@ public class Constants {
 					new Rotation2d(Units.degreesToRadians(180)));
 
 			// Front left positions
-			public static final Pose2d frontLeftLPoseAlignBlue = new Pose2d(4.04, 5.14,
+			public static final Pose2d frontLeftLPoseAlignBlue = new Pose2d(4.015, 5.13,
 					new Rotation2d(Units.degreesToRadians(-56)));
 			public static final Pose2d frontLeftRPoseAlignBlue = new Pose2d(3.71, 5.06,
 					new Rotation2d(Units.degreesToRadians(-56)));
 
 			// Back left positions
 			public static final Pose2d backLeftLPoseAlignBlue = new Pose2d(4.975, 5.224,
-					new Rotation2d(Units.degreesToRadians(-120)));
-			public static final Pose2d backLeftRPoseAlignBlue = new Pose2d(5.2, 4.96,
-					new Rotation2d(Units.degreesToRadians(-120)));
+					new Rotation2d(Units.degreesToRadians(-115.75)));
+			public static final Pose2d backLeftRPoseAlignBlue = new Pose2d(5.21, 4.98,
+					new Rotation2d(Units.degreesToRadians(-115.75)));
 
 			// Back center positions
 			public static final Pose2d backCenterLPoseAlignBlue = new Pose2d(5.76, 4.15,
@@ -155,8 +155,8 @@ public class Constants {
 		public static final int level4Encoder = 39750;
 		public static final int alignIdleEncoder = 6500;
 
-		public static final int lowAlgaeEncoder = 20000;
-		public static final int highAlgaeEncoder = 31000;
+		public static final int lowAlgaeEncoder = 19500;
+		public static final int highAlgaeEncoder = 29250;
 
 		public static final double elevatorSlewRate = 0.2;
 	}
@@ -184,10 +184,10 @@ public class Constants {
 		public static final int algaeEncoderChannel = 3;
 
 		// 0 degrees
-		public static double algaeDownEncoder = 0.89;
+		public static double algaeDownEncoder = 0.303;
 
 		// 90 degrees
-		public static double algaeUpEncoder = 0.631;
+		public static double algaeUpEncoder = 0.05;
 
 		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0.0, 0.01, 0);
 		public static ArmFeedforward algaeLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
@@ -255,5 +255,9 @@ public class Constants {
 		public static PIDController xController = new PIDController(6, 0, 0);
 		public static PIDController yController = new PIDController(4, 0, 0);
 		public static PIDController thetaController = new PIDController(7, 0, 0);
+
+		public static PIDController xControllerRobot = new PIDController(1, 0, 0);
+		public static PIDController yControllerRobot = new PIDController(1, 0, 0);
+		public static PIDController thetaControllerRobot = new PIDController(1, 0, 0);
 	}
 }

@@ -47,6 +47,10 @@ public class Align extends SubsystemBase {
   private PIDController yController = Constants.AlignConstants.yController;
   private PIDController thetaController = Constants.AlignConstants.thetaController;
 
+  private PIDController xControllerRobot = Constants.AlignConstants.xController;
+  private PIDController yControllerRobot = Constants.AlignConstants.yController;
+  private PIDController thetaControllerRobot = Constants.AlignConstants.thetaController;
+
   private double xError = 0.05;
   private double yError = 0.05;
   private double thetaError = 0.1;
@@ -66,21 +70,30 @@ public class Align extends SubsystemBase {
       timesAligned++;
     }
 
-    Pose2d targetPose;
+    Pose2d leftTargetPose;
+    Pose2d rightTargetPose;
 
     if (RobotContainer.isRed()) {
-      targetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][0];
+      leftTargetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][0];
+      rightTargetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][1];
     } else {
-      targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][0];
+      leftTargetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][0];
+      rightTargetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][1];
     }
 
-    double[] m_poseArray = new double[3];
+    double[] leftPoseArray = new double[3];
+    double[] rightPoseArray = new double[3];
 
-    m_poseArray[0] = targetPose.getX();
-    m_poseArray[1] = targetPose.getY();
-    m_poseArray[2] = targetPose.getRotation().getDegrees();
+    leftPoseArray[0] = leftTargetPose.getX();
+    leftPoseArray[1] = leftTargetPose.getY();
+    leftPoseArray[2] = leftTargetPose.getRotation().getDegrees();
 
-    SmartDashboard.putNumberArray("TargetPose", m_poseArray);
+    rightPoseArray[0] = rightTargetPose.getX();
+    rightPoseArray[1] = rightTargetPose.getY();
+    rightPoseArray[2] = rightTargetPose.getRotation().getDegrees();
+
+    SmartDashboard.putNumberArray("LeftTargetPose", leftPoseArray);
+    SmartDashboard.putNumberArray("RightTargetPose", rightPoseArray);
 
   }
 
@@ -149,6 +162,60 @@ public class Align extends SubsystemBase {
     return value >= lower && value <= upper;
   }
 
+  public boolean runRobotRelativeAlign(AlignRequestType request, ChassisSpeeds maximumSpeeds, Translation3d goalErrors,
+      int section) {
+
+    if (section != -1) {
+      requestedAlignSection = section;
+    }
+
+    int side = 0;
+    if (request == AlignRequestType.RIGHT_REEF_ALIGN) {
+      side = 1;
+    }
+
+    double maxSpeedX = Math.abs(maximumSpeeds.vxMetersPerSecond);
+    double maxSpeedY = Math.abs(maximumSpeeds.vyMetersPerSecond);
+    double maxSpeedTheta = Math.abs(maximumSpeeds.omegaRadiansPerSecond);
+
+    Pose2d targetPose;
+
+    if (RobotContainer.isRed()) {
+      targetPose = Constants.AlignPositions.RedPositions.redFeefPoses[requestedAlignSection][side];
+    } else {
+      targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][side];
+    }
+
+    Pose2d pose = drive.getNewCurrentPose();
+
+    double xAlignSpeed = MathUtil.clamp(xController.calculate(pose.getX(), targetPose.getX()), -maxSpeedX, maxSpeedX);
+    double yAlignSpeed = MathUtil.clamp(yController.calculate(pose.getY(), targetPose.getY()), -maxSpeedY, maxSpeedY);
+    double thetaAlignSpeed = MathUtil.clamp(
+        thetaController.calculate(drive.getNewCurrentPose().getRotation().getRadians(),
+            targetPose.getRotation().getRadians()),
+        -maxSpeedTheta, maxSpeedTheta);
+
+    if (Math.abs(pose.getX() - targetPose.getX()) < goalErrors.getX()) {
+      xAlignSpeed = 0.0;
+    }
+
+    if (Math.abs(pose.getY() - targetPose.getY()) < goalErrors.getY()) {
+      yAlignSpeed = 0.0;
+    }
+
+    if (Math
+        .abs(drive.getNewCurrentPose().getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
+            .getZ()) {
+      thetaAlignSpeed = 0.0;
+    }
+
+    speeds = new ChassisSpeeds(xAlignSpeed, yAlignSpeed, thetaAlignSpeed);
+
+    drive.driveFieldRelative(speeds);
+
+    return xAlignSpeed == 0.0 && yAlignSpeed == 0.0 && thetaAlignSpeed == 0.0;
+  }
+
   public boolean runCustomAlign(AlignRequestType request, ChassisSpeeds maximumSpeeds, Translation3d goalErrors,
       int section) {
 
@@ -190,8 +257,9 @@ public class Align extends SubsystemBase {
       yAlignSpeed = 0.0;
     }
 
-    if (Math.abs(drive.getNewCurrentPose().getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
-        .getZ()) {
+    if (Math
+        .abs(drive.getNewCurrentPose().getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
+            .getZ()) {
       thetaAlignSpeed = 0.0;
     }
 

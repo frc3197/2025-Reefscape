@@ -15,6 +15,7 @@ import frc.robot.enums.ErrorMode;
 import frc.robot.enums.RobotMode;
 import frc.robot.enums.AlertMode;
 
+@SuppressWarnings("unused")
 public class LightManager extends SubsystemBase {
 
   private final AddressableLED led;
@@ -35,8 +36,8 @@ public class LightManager extends SubsystemBase {
   public void periodic() {
 
     if (RobotContainer.getEnabled() && DriverStation.getMatchTime() <= 5.0 && !DriverStation.isAutonomous()) {
-      setCountdownLights();
-      return;
+      //setCountdownLights();
+      //return;
     }
 
     // Check for errors first
@@ -160,7 +161,6 @@ public class LightManager extends SubsystemBase {
   }
 
   private void patternSetFullyAligned() {
-    System.out.println("Fully aligned");
     if (Timer.getTimestamp() % 0.12 <= 0.06)
       for (int i = 0; i < buffer.getLength(); i++) {
         // Sets the specified LED to the GRB values for red
@@ -277,7 +277,7 @@ public class LightManager extends SubsystemBase {
   private void setCountdownLights() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
-      if (i > buffer.getLength() - (int) Math.floor((DriverStation.getMatchTime() / 5.0) * buffer.getLength()) - 1) {
+      if (i > buffer.getLength() - (int) Math.floor((DriverStation.getMatchTime() / 5.0) * (double)buffer.getLength()) - 1) {
         buffer.setRGB(i, 80, 255, 35);
       } else {
         buffer.setRGB(i, 0, 0, 0);

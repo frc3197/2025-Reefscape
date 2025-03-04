@@ -188,7 +188,7 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elevator Speed", leftMotor.getVelocity(true).getValueAsDouble());
     SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
 
-    double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.775, 1);
+    double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.5, 0.85);
 
     leftMotor.set(finalSpeed);
     rightMotor.set(finalSpeed);
