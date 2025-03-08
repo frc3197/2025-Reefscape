@@ -153,7 +153,7 @@ public class Algae extends SubsystemBase {
 
     updateAlgaeStatus();
 
-    if (!RobotContainer.getTestMode()) {
+    if (!RobotContainer.getTestMode() && false) {
       updateClosedLoop();
     } else {
       deployMotor.set(0);

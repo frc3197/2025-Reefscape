@@ -36,8 +36,8 @@ public class LightManager extends SubsystemBase {
   public void periodic() {
 
     if (RobotContainer.getEnabled() && DriverStation.getMatchTime() <= 5.0 && !DriverStation.isAutonomous()) {
-      //setCountdownLights();
-      //return;
+      // setCountdownLights();
+      // return;
     }
 
     // Check for errors first
@@ -164,7 +164,7 @@ public class LightManager extends SubsystemBase {
     if (Timer.getTimestamp() % 0.12 <= 0.06)
       for (int i = 0; i < buffer.getLength(); i++) {
         // Sets the specified LED to the GRB values for red
-        buffer.setRGB(i, 255, 255, 0);
+        buffer.setRGB(i, 150, 255, 0);
       }
     else {
       for (int i = 0; i < buffer.getLength(); i++) {
@@ -257,6 +257,14 @@ public class LightManager extends SubsystemBase {
     }
     led.setData(buffer);
   }
+  
+  private void patternSetAlignBlue() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 60, 75, 200);
+    }
+    led.setData(buffer);
+  }
 
   private void checkModeLights() {
     if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_ROUGH) {
@@ -268,6 +276,9 @@ public class LightManager extends SubsystemBase {
     } else if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_CUSTOM) {
       patternSetAlignCustom();
       return;
+    } else if (RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE) {
+      patternSetAlignBlue();
+      return;
     } else {
       turnOffLights();
       return;
@@ -277,7 +288,8 @@ public class LightManager extends SubsystemBase {
   private void setCountdownLights() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
-      if (i > buffer.getLength() - (int) Math.floor((DriverStation.getMatchTime() / 5.0) * (double)buffer.getLength()) - 1) {
+      if (i > buffer.getLength() - (int) Math.floor((DriverStation.getMatchTime() / 5.0) * (double) buffer.getLength())
+          - 1) {
         buffer.setRGB(i, 80, 255, 35);
       } else {
         buffer.setRGB(i, 0, 0, 0);

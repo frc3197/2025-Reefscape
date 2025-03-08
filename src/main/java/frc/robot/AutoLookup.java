@@ -61,28 +61,30 @@ public class AutoLookup {
 
         public Command getAuto() {
                 /*
-                 
-                 
-                return new SequentialCommandGroup(
-                                Commands.run(() -> {
-                                        drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
-                                                        new Rotation2d(Units.degreesToRadians(0))));
-                                }),
-
-                                // Algae arm stow
-                                algae.setTargetAngleDegrees(90),
-
-                                // Move elevator up a bit to get ready
-                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 1000),
-                                new WaitCommand(1),
-
-                                // Go to first piece, back left R
-                                loadPath("NewAuto"),
-
-                                new WaitCommand(1),
-
-                                // Place first piece, back left R
-                                RobotContainer.getScoreSequenceL4Command());*/
+                 * 
+                 * 
+                 * return new SequentialCommandGroup(
+                 * Commands.run(() -> {
+                 * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
+                 * new Rotation2d(Units.degreesToRadians(0))));
+                 * }),
+                 * 
+                 * // Algae arm stow
+                 * algae.setTargetAngleDegrees(90),
+                 * 
+                 * // Move elevator up a bit to get ready
+                 * elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder +
+                 * 1000),
+                 * new WaitCommand(1),
+                 * 
+                 * // Go to first piece, back left R
+                 * loadPath("NewAuto"),
+                 * 
+                 * new WaitCommand(1),
+                 * 
+                 * // Place first piece, back left R
+                 * RobotContainer.getScoreSequenceL4Command());
+                 */
 
                 return new SequentialCommandGroup(
                                 // Set initial position nope lol
@@ -91,30 +93,25 @@ public class AutoLookup {
                                 algae.setTargetAngleDegrees(90),
 
                                 // Move elevator up a bit to get ready
-                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 1000),
+                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 8000),
 
                                 // Go to first piece, back left R
                                 loadPath("FarStartToBackLeftR"),
 
                                 // Place first piece, back left R
                                 new ParallelCommandGroup(
-                                                new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
+                                                new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
                                                                 new ChassisSpeeds(0.9, 0.725, 1.65),
                                                                 new Translation3d(0.015, 0.015, 0.01), 3)
-                                                                .withTimeout(1.05),
+                                                                .withTimeout(0.7),
                                                 RobotContainer.getScoreSequenceL4Command()),
 
                                 // Start intaking for second piece but end process after driving & delay
-                                /*
-                                 * new SequentialCommandGroup(RobotContainer.getIntakeCommand()).raceWith(
-                                 * new SequentialCommandGroup(
-                                 * new WaitCommand(0.45))),
-                                 */
                                 loadPath("BackLeftRToStation"),
-                                // Commands.runOnce(() -> {drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0,
-                                // 0));}),
 
-                                new WaitCommand(0.75),
+                                Commands.waitUntil(() -> {
+                                        return vision.detectsPiece();
+                                }).withTimeout(1.5),
                                 new ParallelCommandGroup(
                                                 new SequentialCommandGroup(
                                                                 RobotContainer.getAutoIntakeCommand(),
@@ -127,10 +124,7 @@ public class AutoLookup {
 
                                                                 // Go to second branch, front left L
                                                                 loadPath("StationToFrontLeftL"),
-                                                                // Commands.runOnce(() -> {
-                                                                // drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0,
-                                                                // 0));
-                                                                // }))),
+
                                                                 new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
                                                                                 new ChassisSpeeds(0.9, 0.725, 1.65),
                                                                                 new Translation3d(0.015, 0.015, 0.01),
@@ -144,14 +138,8 @@ public class AutoLookup {
                                 RobotContainer.getScoreSequenceL4Command(),
 
                                 // Start intaking for third piece but end process after driving & delay
-                                /*
-                                 * RobotContainer.getIntakeCommand().raceWith(
-                                 * new SequentialCommandGroup(
-                                 * new WaitCommand(0.45))),
-                                 */
                                 loadPath("FrontLeftLToStation"),
-                                // Commands.runOnce(() -> {drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0,
-                                // 0));}),
+
                                 new WaitCommand(0.375),
                                 new ParallelCommandGroup(
                                                 new SequentialCommandGroup(
@@ -166,6 +154,11 @@ public class AutoLookup {
 
                                                                 // Go to third branch, front left R
                                                                 loadPath("StationToFrontLeftR"),
+                                                                new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
+                                                                                new ChassisSpeeds(1.2, 1.0, 1.65),
+                                                                                new Translation3d(0.015, 0.015, 0.01),
+                                                                                2)
+                                                                                .withTimeout(1),
                                                                 Commands.runOnce(() -> {
                                                                         drivetrain.driveRobotRelative(
                                                                                         new ChassisSpeeds(0, 0,
@@ -176,14 +169,6 @@ public class AutoLookup {
 
                                 // Go to third branch, front left
                                 elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 10000),
-
-                                // Make sure piece is intake and align finely
-                                new ParallelCommandGroup(
-                                                // RobotContainer.getIntakeCommand(),
-                                                new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
-                                                                new ChassisSpeeds(1.2, 1.0, 1.65),
-                                                                new Translation3d(0.015, 0.015, 0.01), 2)
-                                                                .withTimeout(1)),
 
                                 RobotContainer.getScoreSequenceL4Command()
 

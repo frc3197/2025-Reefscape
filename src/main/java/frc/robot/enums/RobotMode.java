@@ -11,5 +11,6 @@ public enum RobotMode {
     ALIGN_REEF_CUSTOM,
     ALIGN_PROCESSOR,
     TRACK_STATION,
+    DETECTS_PIECE,
     NONE
 }

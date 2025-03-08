@@ -47,9 +47,9 @@ public class Align extends SubsystemBase {
   private PIDController yController = Constants.AlignConstants.yController;
   private PIDController thetaController = Constants.AlignConstants.thetaController;
 
-  private PIDController xControllerRobot = Constants.AlignConstants.xController;
-  private PIDController yControllerRobot = Constants.AlignConstants.yController;
-  private PIDController thetaControllerRobot = Constants.AlignConstants.thetaController;
+  private PIDController xControllerRobot = Constants.AlignConstants.xControllerRobot;
+  private PIDController yControllerRobot = Constants.AlignConstants.yControllerRobot;
+  private PIDController thetaControllerRobot = Constants.AlignConstants.thetaControllerRobot;
 
   private double xError = 0.05;
   private double yError = 0.05;
@@ -186,32 +186,33 @@ public class Align extends SubsystemBase {
       targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][side];
     }
 
-    Pose2d pose = drive.getNewCurrentPose();
+    Pose2d robotPose = drive.getNewCurrentPose();
 
-    double xAlignSpeed = MathUtil.clamp(xController.calculate(pose.getX(), targetPose.getX()), -maxSpeedX, maxSpeedX);
-    double yAlignSpeed = MathUtil.clamp(yController.calculate(pose.getY(), targetPose.getY()), -maxSpeedY, maxSpeedY);
+    Pose2d offsetPose = robotPose.relativeTo(targetPose);
+
+    double xAlignSpeed = MathUtil.clamp(xControllerRobot.calculate(offsetPose.getX()), -maxSpeedX, maxSpeedX);
+    double yAlignSpeed = MathUtil.clamp(yControllerRobot.calculate(offsetPose.getY()), -maxSpeedY, maxSpeedY);
     double thetaAlignSpeed = MathUtil.clamp(
-        thetaController.calculate(drive.getNewCurrentPose().getRotation().getRadians(),
-            targetPose.getRotation().getRadians()),
+        thetaControllerRobot.calculate(offsetPose.getRotation().getRadians()),
         -maxSpeedTheta, maxSpeedTheta);
 
-    if (Math.abs(pose.getX() - targetPose.getX()) < goalErrors.getX()) {
+    if (Math.abs(offsetPose.getX()) < goalErrors.getX()) {
       xAlignSpeed = 0.0;
     }
 
-    if (Math.abs(pose.getY() - targetPose.getY()) < goalErrors.getY()) {
+    if (Math.abs(offsetPose.getY()) < goalErrors.getY()) {
       yAlignSpeed = 0.0;
     }
 
     if (Math
-        .abs(drive.getNewCurrentPose().getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
+        .abs(offsetPose.getRotation().getRadians()) < goalErrors
             .getZ()) {
       thetaAlignSpeed = 0.0;
     }
 
     speeds = new ChassisSpeeds(xAlignSpeed, yAlignSpeed, thetaAlignSpeed);
 
-    drive.driveFieldRelative(speeds);
+    drive.driveRobotRelative(speeds);
 
     return xAlignSpeed == 0.0 && yAlignSpeed == 0.0 && thetaAlignSpeed == 0.0;
   }

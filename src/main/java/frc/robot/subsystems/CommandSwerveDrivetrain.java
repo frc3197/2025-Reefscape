@@ -342,10 +342,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         m_poseArray[2] = getNewCurrentPose().getRotation().getDegrees();
 
         SmartDashboard.putNumberArray("PoseWithVision", m_poseArray);
-        SmartDashboard.putNumber("Pigeon rotation", newPoseEstimator.getEstimatedPosition().getRotation().getDegrees());
+        SmartDashboard.putNumber("Pigeon rotation", getState().Pose.getRotation().getDegrees());
 
         newPoseEstimator.updateWithTime(Timer.getFPGATimestamp(),
-                getPigeon2().getRotation2d(),
+                getState().Pose.getRotation(),
                 getPositions());
 
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {

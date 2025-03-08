@@ -49,7 +49,7 @@ public class AlignReef extends Command {
 
   @Override
   public void execute() {
-    aligned = align.runCustomAlign(this.requestType, maximumSpeeds, goalErrors, section);
+    aligned = align.runRobotRelativeAlign(this.requestType, maximumSpeeds, goalErrors, section);
   }
 
   @Override

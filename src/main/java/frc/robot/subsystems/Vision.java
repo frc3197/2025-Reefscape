@@ -25,6 +25,8 @@ import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
+import frc.robot.enums.RobotMode;
 import frc.robot.util.LimelightHelpers;
 
 @SuppressWarnings("unused")
@@ -40,7 +42,7 @@ public class Vision extends SubsystemBase {
 
   private final Transform3d robotToLeft = new Transform3d(
       new Translation3d(Units.inchesToMeters(-2.75), Units.inchesToMeters(-11), Units.inchesToMeters(7.25)),
-      new Rotation3d(0, Units.degreesToRadians(-63+180), Units.degreesToRadians(-6)));
+      new Rotation3d(0, Units.degreesToRadians(-63 + 180), Units.degreesToRadians(-6)));
 
   private final Transform3d robotToRight = new Transform3d(
       new Translation3d(Units.inchesToMeters(-9.75), Units.inchesToMeters(-11), Units.inchesToMeters(7.25)),
@@ -52,6 +54,7 @@ public class Vision extends SubsystemBase {
 
   // Reef & algae align camera
   private final PhotonCamera alignCamera;
+  private final PhotonCamera intakeCamera;
 
   // Drive subsystem
   private CommandSwerveDrivetrain drive;
@@ -62,6 +65,7 @@ public class Vision extends SubsystemBase {
     this.backCamera = new PhotonCamera("camera-back");
     this.leftCamera = new PhotonCamera("camera-left");
     this.rightCamera = new PhotonCamera("camera-right");
+    this.intakeCamera = new PhotonCamera("intake-camera");
     this.backEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
         robotToBack);
     this.leftEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
@@ -93,6 +97,8 @@ public class Vision extends SubsystemBase {
     }
 
     pollPhotonCameras();
+
+    checkIntakeCamera();
   }
 
   // Returns the best vision pose, for updating pose estimator
@@ -150,6 +156,11 @@ public class Vision extends SubsystemBase {
           aprilTagFieldLayout.getTagPose(target.getFiducialId()).get(), robotToLeft);
       Transform3d robotOffset = target.getBestCameraToTarget();
 
+      double[] newVision = { robotPose.toPose2d().getX(), robotPose.toPose2d().getY(),
+        robotPose.toPose2d().getRotation().getDegrees() };
+
+      SmartDashboard.putNumberArray("LEFT CAMERA VISION", newVision);
+
       if (Math.sqrt(
           Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
         drive.addNewVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds());
@@ -167,6 +178,11 @@ public class Vision extends SubsystemBase {
 
       Transform3d robotOffset = target.getBestCameraToTarget();
 
+      double[] newVision = { robotPose.toPose2d().getX(), robotPose.toPose2d().getY(),
+        robotPose.toPose2d().getRotation().getDegrees() };
+
+      SmartDashboard.putNumberArray("RIGHT CAMERA VISION", newVision);
+
       if (Math.sqrt(
           Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
         drive.addNewVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds());
@@ -180,5 +196,27 @@ public class Vision extends SubsystemBase {
       return new double[] { bestTarget.getYaw(), bestTarget.getPitch() };
     }
     return new double[] { 0, 0 };
+  }
+
+  public void checkIntakeCamera() {
+    var result = intakeCamera.getLatestResult();
+    if (result.hasTargets()) {
+      var bestTarget = result.getBestTarget();
+      RobotContainer.setRobotMode(RobotMode.DETECTS_PIECE);
+      return;
+    }
+    if(RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE) {
+      RobotContainer.setRobotMode(RobotMode.NONE);
+    }
+  }
+
+  public boolean detectsPiece() {
+    var result = intakeCamera.getLatestResult();
+    if (result.hasTargets()) {
+      var bestTarget = result.getBestTarget();
+      RobotContainer.setRobotMode(RobotMode.DETECTS_PIECE);
+      return true;
+    }
+    return false;
   }
 }

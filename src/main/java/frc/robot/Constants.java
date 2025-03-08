@@ -21,9 +21,9 @@ public class Constants {
 		public static class RedPositions {
 			// Front right positions
 			public static final Pose2d frontRightLPoseAlignRed = new Pose2d(13.78, 4.95,
-					new Rotation2d(Units.degreesToRadians(-115)));
+					new Rotation2d(Units.degreesToRadians(-120)));
 			public static final Pose2d frontRightRPoseAlignRed = new Pose2d(13.55, 5.14,
-					new Rotation2d(Units.degreesToRadians(-115)));
+					new Rotation2d(Units.degreesToRadians(-120)));
 
 			// Front center positions
 			public static final Pose2d frontCenterLPoseAlignRed = new Pose2d(14.45, 3.91,
@@ -33,27 +33,27 @@ public class Constants {
 
 			// Front left positions
 			public static final Pose2d frontLeftLPoseAlignRed = new Pose2d(13.542, 2.890,
-					new Rotation2d(Units.degreesToRadians(124)));
+					new Rotation2d(Units.degreesToRadians(120)));
 			public static final Pose2d frontLeftRPoseAlignRed = new Pose2d(13.820, 3.03,
-					new Rotation2d(Units.degreesToRadians(124)));
+					new Rotation2d(Units.degreesToRadians(120)));
 
 			// Back left positions
-			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.56, 2.84,
-					new Rotation2d(Units.degreesToRadians(65)));
+			public static final Pose2d backLeftLPoseAlignRed = new Pose2d(12.6, 2.92,
+					new Rotation2d(Units.degreesToRadians(60)));
 			public static final Pose2d backLeftRPoseAlignRed = new Pose2d(12.33, 3.06,
-					new Rotation2d(Units.degreesToRadians(62)));
+					new Rotation2d(Units.degreesToRadians(60)));
 
 			// Back center positions
 			public static final Pose2d backCenterLPoseAlignRed = new Pose2d(11.8, 3.87,
-					new Rotation2d(Units.degreesToRadians(3)));
+					new Rotation2d(Units.degreesToRadians(0)));
 			public static final Pose2d backCenterRPoseAlignRed = new Pose2d(11.8, 4.18,
 					new Rotation2d(Units.degreesToRadians(0)));
 
 			// Back right positions
-			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.3, 5.03,
-					new Rotation2d(Units.degreesToRadians(-57)));
+			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.4, 4.93,
+					new Rotation2d(Units.degreesToRadians(-60)));
 			public static final Pose2d backRightRPoseAlignRed = new Pose2d(12.61, 5.12,
-					new Rotation2d(Units.degreesToRadians(-57)));
+					new Rotation2d(Units.degreesToRadians(-60)));
 
 			public static final Pose2d[][] redFeefPoses = { { frontRightLPoseAlignRed, frontRightRPoseAlignRed },
 					{ frontCenterLPoseAlignRed, frontCenterRPoseAlignRed },
@@ -256,8 +256,11 @@ public class Constants {
 		public static PIDController yController = new PIDController(4, 0, 0);
 		public static PIDController thetaController = new PIDController(7, 0, 0);
 
-		public static PIDController xControllerRobot = new PIDController(1, 0, 0);
-		public static PIDController yControllerRobot = new PIDController(1, 0, 0);
-		public static PIDController thetaControllerRobot = new PIDController(1, 0, 0);
+		// Drive forward
+		public static PIDController xControllerRobot = new PIDController(10, 0, 0);
+
+		// Drive left/right
+		public static PIDController yControllerRobot = new PIDController(5, 0, 0);
+		public static PIDController thetaControllerRobot = new PIDController(3, 0, 0);
 	}
 }
