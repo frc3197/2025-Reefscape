@@ -7,6 +7,7 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -30,6 +31,7 @@ public class Outtake extends SubsystemBase {
 
     outtakeMotor = new TalonFX(Constants.OuttakeConstants.outtakeMotorId);
     outtakeMotor.getConfigurator().apply(Constants.OuttakeConstants.outtakeMotorConfig);
+    outtakeMotor.setNeutralMode(NeutralModeValue.Brake);
 
     detectsCoral = () -> {
       return outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange;

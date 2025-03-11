@@ -2,20 +2,27 @@ package frc.robot;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 import static edu.wpi.first.units.Units.*;
 
+@SuppressWarnings("unused")
 public class Constants {
+
+	public static final boolean tuningMode = true;
 
 	public static class AlignPositions {
 		public static class RedPositions {
@@ -110,30 +117,53 @@ public class Constants {
 	}
 
 	public static class ElevatorConstants {
+
+		// in init function
+		/*
+		 * TalonFXConfiguration talonFXConfigsLeft = new
+		 * TalonFXConfiguration().withSlot0(
+		 * new
+		 * Slot0Configs().withKS(0.25).withKV(0.12).withKA(0.01).withKP(4.8).withKI(0.0)
+		 * .withKD(0.1)).withCurrentLimits(
+		 * new CurrentLimitsConfigs()
+		 * .withStatorCurrentLimit(Amps.of(25))
+		 * .withStatorCurrentLimitEnable(true)
+		 * .withSupplyCurrentLimit(Amps.of(25))
+		 * .withSupplyCurrentLimitEnable(true))
+		 * .withMotorOutput(new
+		 * MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+		 * 
+		 * // set Motion Magic settings
+		 * MotionMagicConfigs motionMagicConfigs =
+		 * talonFXConfigsLeft.MotionMagic.withMotionMagicAcceleration(160)
+		 * .withMotionMagicCruiseVelocity(80).withMotionMagicJerk(1600);
+		 */
+
 		public static final int leftElevatorMotorId = 8;
 		public static final int rightElevatorMotorId = 9;
 
-		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0, 0.03, 0);
+		public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(300, 200);
+
+		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0.005, 0.065, 0.01);
 
 		public static final ElevatorFeedforward algaeLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
 
-		public static final PIDController emptyLoadElevatorPID = new PIDController(0.95, 0, 0);
-		public static final PIDController algaeLoadElevatorPID = new PIDController(0.2, 0, 0);
+		public static final ProfiledPIDController emptyLoadElevatorPID = new ProfiledPIDController(0.185, 0, 0.01, CONSTRAINTS);
 
 		public static final TalonFXConfiguration leftElevatorMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(25))
+						.withStatorCurrentLimit(Amps.of(100))
 						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(25))
+						.withSupplyCurrentLimit(Amps.of(100))
 						.withSupplyCurrentLimitEnable(true))
 				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
 
 		public static final TalonFXConfiguration rightElevatorMotorConfig = new TalonFXConfiguration()
 				.withCurrentLimits(
 						new CurrentLimitsConfigs()
-								.withStatorCurrentLimit(Amps.of(25))
+								.withStatorCurrentLimit(Amps.of(100))
 								.withStatorCurrentLimitEnable(true)
-								.withSupplyCurrentLimit(Amps.of(25))
+								.withSupplyCurrentLimit(Amps.of(100))
 								.withSupplyCurrentLimitEnable(true))
 				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
@@ -148,15 +178,15 @@ public class Constants {
 		public static final int elevatorLowHeight = 30;
 		public static final int elevatorHighHeight = 200;
 
-		public static final int loadingStationEncoder = 100;
-		public static final int level1Encoder = 12500;
-		public static final int level2Encoder = 10000;
-		public static final int level3Encoder = 22000;
-		public static final int level4Encoder = 39750;
-		public static final int alignIdleEncoder = 6500;
+		public static final int loadingStationEncoder = 100/1000;
+		public static final int level1Encoder = 12500/1000;
+		public static final int level2Encoder = 10000/1000;
+		public static final double level3Encoder = 23.5;
+		public static final double level4Encoder = 41.1;
+		public static final int alignIdleEncoder = 6500/1000;
 
-		public static final int lowAlgaeEncoder = 19500;
-		public static final int highAlgaeEncoder = 29250;
+		public static final int lowAlgaeEncoder = 19500/1000;
+		public static final int highAlgaeEncoder = 29250/1000;
 
 		public static final double elevatorSlewRate = 0.2;
 	}
@@ -184,10 +214,10 @@ public class Constants {
 		public static final int algaeEncoderChannel = 3;
 
 		// 0 degrees
-		public static double algaeDownEncoder = 0.303;
+		public static double algaeDownEncoder = 0.379;
 
 		// 90 degrees
-		public static double algaeUpEncoder = 0.05;
+		public static double algaeUpEncoder = 0.131;
 
 		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0.0, 0.01, 0);
 		public static ArmFeedforward algaeLoadArmFeedForward = new ArmFeedforward(0, 0, 0);

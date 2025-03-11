@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
@@ -42,20 +43,10 @@ public class Elevator extends SubsystemBase {
 
   // Elevator
   private ElevatorFeedforward emptyElevatorFeedforward;
-  private ElevatorFeedforward algaeElevatorFeedforward;
-  private final PIDController emptyLoadPID;
-  private final PIDController algaeLoadPID;
+  private final ProfiledPIDController emptyLoadPID;
 
   // Target elevation height
   private double targetHeightTicks = 0;
-
-  // Elevator network table topic setup
-  private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
-  private final NetworkTable driveStateTable = inst.getTable("Elevator");
-  private final DoublePublisher elevatorEncoderTopic = driveStateTable.getDoubleTopic("ElevatorEncoder").publish();
-
-  private final SlewRateLimiter leftFilter = new SlewRateLimiter(Constants.ElevatorConstants.elevatorSlewRate);
-  private final SlewRateLimiter rightFilter = new SlewRateLimiter(Constants.ElevatorConstants.elevatorSlewRate);
 
   public Elevator() {
 
@@ -72,10 +63,8 @@ public class Elevator extends SubsystemBase {
         Constants.ElevatorConstants.elevatorEncoderChannelB);
 
     this.emptyElevatorFeedforward = Constants.ElevatorConstants.emptyLoadElevatorFeed;
-    this.algaeElevatorFeedforward = Constants.ElevatorConstants.algaeLoadElevatorFeed;
 
     this.emptyLoadPID = Constants.ElevatorConstants.emptyLoadElevatorPID;
-    this.algaeLoadPID = Constants.ElevatorConstants.algaeLoadElevatorPID;
 
     this.elevatorEncoder.setReverseDirection(true);
     this.elevatorEncoder.reset();
@@ -94,9 +83,6 @@ public class Elevator extends SubsystemBase {
 
     // Check elevator errors
     checkError();
-
-    // Update network tables for debugging
-    updateNetworkTables();
   }
 
   public double getTargetHeight() {
@@ -125,7 +111,7 @@ public class Elevator extends SubsystemBase {
 
   // Retrieve raw encoder ticks
   public double readEncoder() {
-    return elevatorEncoder.getRaw();
+    return elevatorEncoder.getRaw()/1000.0;
   }
 
   // Zero encoder
@@ -141,12 +127,14 @@ public class Elevator extends SubsystemBase {
   // Setter for target height
   private void setTargetHeight(double value) {
     targetHeightTicks = value;
+    emptyLoadPID.setGoal(value);
   }
 
   // Set target height in encoder ticks
   public Command setTargetHeightCommand(double value) {
     return Commands.runOnce(() -> {
       setTargetHeight(value);
+      emptyLoadPID.setGoal(value);
     });
   }
 
@@ -154,6 +142,7 @@ public class Elevator extends SubsystemBase {
   public Command setTargetHeightCommand(DoubleSupplier value) {
     return Commands.runOnce(() -> {
       setTargetHeight(value.getAsDouble());
+      emptyLoadPID.setGoal(value.getAsDouble());
     });
   }
 
@@ -169,33 +158,32 @@ public class Elevator extends SubsystemBase {
     }
   }
 
+  public void setGoal(double height, double velocity) {
+    emptyLoadPID.setGoal(new TrapezoidProfile.State(height, velocity));
+}
+
   // Update the closed loop for automatic control
   private void updateClosedLoop() {
 
     double calculatedPIDSpeed = 0;
     double feedForwardSpeed = 0;
 
-    if (RobotContainer.getHasAlgae() && false) {
-      feedForwardSpeed = algaeElevatorFeedforward.calculate(leftMotor.getVelocity().getValueAsDouble());
-      calculatedPIDSpeed = algaeLoadPID.calculate((readEncoder() - targetHeightTicks) / 100);
-    } else {
-      feedForwardSpeed = emptyElevatorFeedforward.calculate(leftMotor.getVelocity().getValueAsDouble());
-      calculatedPIDSpeed = emptyLoadPID.calculate((readEncoder() - targetHeightTicks) / 100);
-    }
-    calculatedPIDSpeed *= 0.015;
+    feedForwardSpeed = emptyElevatorFeedforward.calculate(emptyLoadPID.getSetpoint().velocity);
+    calculatedPIDSpeed = emptyLoadPID.calculate(readEncoder());
+
+    //calculatedPIDSpeed *= 0.015;
 
     SmartDashboard.putNumber("Elevator PID calc", calculatedPIDSpeed);
     SmartDashboard.putNumber("Elevator Speed", leftMotor.getVelocity(true).getValueAsDouble());
+    SmartDashboard.putNumber("Elevator Velocity NEW", emptyLoadPID.getSetpoint().velocity);
     SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
+    
+    double finalSpeed = MathUtil.clamp((calculatedPIDSpeed * 1.05) + (feedForwardSpeed*1), -0.25, 1.0);
+    SmartDashboard.putNumber("Elevator FINAL", finalSpeed);
 
-    double finalSpeed = MathUtil.clamp(calculatedPIDSpeed + feedForwardSpeed, -0.5, 0.85);
-
+    finalSpeed = MathUtil.applyDeadband(finalSpeed, 0.09);
+    
     leftMotor.set(finalSpeed);
     rightMotor.set(finalSpeed);
-  }
-
-  // Send values over network table topics
-  private void updateNetworkTables() {
-    elevatorEncoderTopic.set(readEncoder());
   }
 }

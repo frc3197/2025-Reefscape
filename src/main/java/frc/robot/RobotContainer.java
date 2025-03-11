@@ -82,8 +82,7 @@ public class RobotContainer {
     // Controllers
     private final static CommandXboxController driverController = new CommandXboxController(0);
     private final static CommandXboxController operatorController = new CommandXboxController(1);
-    // private final static CommandXboxController extraController = new
-    // CommandXboxController(2);
+    //private final static CommandXboxController extraController = new CommandXboxController(2);
     private final static CommandXboxController[] controllers = { driverController, operatorController };
 
     // Robot statuses
@@ -148,11 +147,11 @@ public class RobotContainer {
 
         // Bump up elevator
         operatorController.back().onTrue(elevator.setTargetHeightCommand(() -> {
-            return elevator.getTargetHeight() + 2500;
+            return elevator.getTargetHeight() + 2.5;
         }));
 
         operatorController.rightStick().onTrue(elevator.setTargetHeightCommand(() -> {
-            return elevator.getTargetHeight() - 1500;
+            return elevator.getTargetHeight() - 1.5;
         }));
 
         /*
@@ -177,11 +176,13 @@ public class RobotContainer {
 
         driverController.leftTrigger().whileTrue(new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
                 new ChassisSpeeds(0.85, 0.85, 1.5), new Translation3d(0.015, 0.015, 0.01)));
-                //.onFalse(new InstantCommand(() -> addAlert(new AlertBody(AlertMode.FULLY_ALIGNED, 0.5))));
+        // .onFalse(new InstantCommand(() -> addAlert(new
+        // AlertBody(AlertMode.FULLY_ALIGNED, 0.5))));
 
         driverController.rightTrigger().whileTrue(new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
                 new ChassisSpeeds(0.85, 0.85, 1.5), new Translation3d(0.015, 0.015, 0.01)));
-                //.onFalse(new InstantCommand(() -> addAlert(new AlertBody(AlertMode.FULLY_ALIGNED, 0.5))));
+        // .onFalse(new InstantCommand(() -> addAlert(new
+        // AlertBody(AlertMode.FULLY_ALIGNED, 0.5))));
 
         /*
          * // Brake
@@ -208,11 +209,11 @@ public class RobotContainer {
         // driverController.y().onTrue(elevator.getManualCommand(0.5)).onFalse(elevator.getManualCommand(0.0));
         // driverController.a().onTrue(elevator.getManualCommand(-0.4)).onFalse(elevator.getManualCommand(0.0));
 
-        operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 750));
+        operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0));
         operatorController.y()
-                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 1500));
+                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 0));
         operatorController.b()
-                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder + 1500));
+                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder + 0));
         operatorController.a()
                 .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
 
@@ -268,15 +269,14 @@ public class RobotContainer {
         // -------------------------------------------------------------------------
         // EXTRA TESTING COMMANDS
         // -------------------------------------------------------------------------
-        /*
-         * extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
-         * extraController::getLeftTriggerAxis))
-         * .onFalse(climber.setClimberArmSpeed(0));
-         * extraController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() ->
-         * {
-         * return -1 * extraController.getRightTriggerAxis();
-         * })).onFalse(climber.setClimberArmSpeed(0));
-         */
+
+        /*extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
+                extraController::getLeftTriggerAxis))
+                .onFalse(climber.setClimberArmSpeed(0));
+        extraController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() -> {
+            return -1 * extraController.getRightTriggerAxis();
+        })).onFalse(climber.setClimberArmSpeed(0));*/
+
     }
 
     public static double getAlignRequestAngle() {
@@ -423,10 +423,11 @@ public class RobotContainer {
                     if (isRed())
                         drivetrain.resetNewPose(new Pose2d(10.321, 1.915, new Rotation2d(Units.degreesToRadians(180))));
                     else
-                        /*drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
-                                new Rotation2d(Units.degreesToRadians(0))));*/
-                     drivetrain.resetNewPose(new Pose2d(7.229, 5.416, new
-                     Rotation2d(Units.degreesToRadians(0))));
+                        /*
+                         * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
+                         * new Rotation2d(Units.degreesToRadians(0))));
+                         */
+                        drivetrain.resetNewPose(new Pose2d(7.229, 5.416, new Rotation2d(Units.degreesToRadians(0))));
                 }),
                 autoLookup.getAuto());
 
@@ -435,7 +436,7 @@ public class RobotContainer {
 
     public static Command getScoreSequenceL4Command() {
         return elevator
-                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 750).andThen(() -> {
+                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0).andThen(() -> {
                     drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0));
                 })
                 .andThen(Commands.waitUntil(() -> {
@@ -462,15 +463,15 @@ public class RobotContainer {
     }
 
     public static Command getAlgaeScoreBargeInitial() {
-        return algae.setTargetAngleDegrees(75)
-                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 2200));
+        return algae.setTargetAngleDegrees(67)
+                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0));
     }
 
     public static Command getAlgaeScoreBargeFinal() {
         return (algae.setAlgaeGrabberSpeedCommand(-0.75)).andThen(Commands.waitSeconds(0.07))
-        .andThen(algae.setAlgaeGrabberSpeedCommand(1, 1)).andThen(Commands.waitSeconds(0.45))
-        .andThen(algae.setTargetAngleDegrees(85)).andThen(algae.setAlgaeGrabberSpeedCommand(0))
-        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
+                .andThen(algae.setAlgaeGrabberSpeedCommand(1, 1)).andThen(Commands.waitSeconds(0.45))
+                .andThen(algae.setTargetAngleDegrees(85)).andThen(algae.setAlgaeGrabberSpeedCommand(0))
+                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
     }
 
     public static Command getAlgaeIntakeFloorCommand() {
@@ -513,7 +514,7 @@ public class RobotContainer {
                         .andThen(algae.setAlgaeGrabberSpeedCommand(0))
                         .andThen(new WaitCommand(0.5))
                         .andThen(algae.setTargetAngleDegrees(85))
-                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder - 8000))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder - 8))
                         .andThen(new WaitCommand(0.85))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }
@@ -530,7 +531,7 @@ public class RobotContainer {
                         .andThen(algae.setAlgaeGrabberSpeedCommand(0))
                         .andThen(new WaitCommand(0.5))
                         .andThen(algae.setTargetAngleDegrees(85))
-                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.highAlgaeEncoder - 8000))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.highAlgaeEncoder - 8))
                         .andThen(new WaitCommand(0.85))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }

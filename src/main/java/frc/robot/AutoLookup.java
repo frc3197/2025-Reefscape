@@ -93,7 +93,7 @@ public class AutoLookup {
                                 algae.setTargetAngleDegrees(90),
 
                                 // Move elevator up a bit to get ready
-                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 8000),
+                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 000),
 
                                 // Go to first piece, back left R
                                 loadPath("FarStartToBackLeftR"),
@@ -132,7 +132,7 @@ public class AutoLookup {
 
                                 outtake.stopMotors(),
                                 // RobotContainer.getIntakeCommand(),
-                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 2500),
+                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 00),
 
                                 // Place second piece
                                 RobotContainer.getScoreSequenceL4Command(),
@@ -146,7 +146,7 @@ public class AutoLookup {
                                                                 RobotContainer.getAutoIntakeCommand(),
                                                                 elevator.setTargetHeightCommand(
                                                                                 Constants.ElevatorConstants.level3Encoder
-                                                                                                + 10000),
+                                                                                                + 0000),
                                                                 outtake.feedOuttake(-0.2),
                                                                 new WaitCommand(0.0667),
                                                                 outtake.feedOuttake(0.0)),
@@ -168,7 +168,7 @@ public class AutoLookup {
                                 outtake.stopMotors(),
 
                                 // Go to third branch, front left
-                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 10000),
+                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 0000),
 
                                 RobotContainer.getScoreSequenceL4Command()
 

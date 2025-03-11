@@ -16,6 +16,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -139,7 +140,7 @@ public class Algae extends SubsystemBase {
 
   public BooleanSupplier hasAlgae() {
     return (() -> {
-      return algaeLaserCan.getMeasurement().distance_mm < Constants.AlgaeConstants.algaeSensorDistance
+      return algaeLaserCan.getMeasurement().status == 0 && algaeLaserCan.getMeasurement().distance_mm < Constants.AlgaeConstants.algaeSensorDistance
           && algaeLaserCan.getMeasurement().distance_mm >= 1;
     });
   }
@@ -149,11 +150,11 @@ public class Algae extends SubsystemBase {
 
     SmartDashboard.putNumber("Algae Arm Encoder", algaeEncoder.get());
     SmartDashboard.putNumber("Algae Arm Angle", convertTicksToDegrees(algaeEncoder.get()));
-    SmartDashboard.putNumber("Algae Laser Can", algaeLaserCan.getMeasurement().distance_mm);
+    //SmartDashboard.putNumber("Algae Laser Can", algaeLaserCan.getMeasurement().distance_mm);
 
     updateAlgaeStatus();
 
-    if (!RobotContainer.getTestMode() && false) {
+    if (!RobotContainer.getTestMode()) {
       updateClosedLoop();
     } else {
       deployMotor.set(0);

@@ -42,26 +42,26 @@ public class LightManager extends SubsystemBase {
 
     // Check for errors first
     if (RobotContainer.hasErrors()) {
-      checkErrorLights();
+      //checkErrorLights();
       return;
     }
 
     SmartDashboard.putBoolean("Has Alert", RobotContainer.hasAlert(AlertMode.FULLY_ALIGNED));
     if (RobotContainer.hasAlerts()) {
-      checkAlertLights();
+      //checkAlertLights();
       return;
     }
 
     if (RobotContainer.getEnabled() && RobotContainer.getRobotMode() != RobotMode.NONE) {
-      checkModeLights();
+      //checkModeLights();
       return;
     }
 
     if (!RobotContainer.getEnabled()) {
       if (DriverStation.getAlliance().isEmpty()) {
-        patternSetIdleOrange();
+        //patternSetIdleOrange();
       } else {
-        patternSetIdleAlliance();
+        //patternSetIdleAlliance();
       }
       return;
     }
