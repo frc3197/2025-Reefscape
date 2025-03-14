@@ -186,7 +186,7 @@ public class Align extends SubsystemBase {
       targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][side];
     }
 
-    Pose2d robotPose = drive.getNewCurrentPose();
+    Pose2d robotPose = drive.getState().Pose;
 
     Pose2d offsetPose = robotPose.relativeTo(targetPose);
 
@@ -241,12 +241,12 @@ public class Align extends SubsystemBase {
       targetPose = Constants.AlignPositions.BluePositions.blueFeefPoses[requestedAlignSection][side];
     }
 
-    Pose2d pose = drive.getNewCurrentPose();
+    Pose2d pose = drive.getState().Pose;
 
     double xAlignSpeed = MathUtil.clamp(xController.calculate(pose.getX(), targetPose.getX()), -maxSpeedX, maxSpeedX);
     double yAlignSpeed = MathUtil.clamp(yController.calculate(pose.getY(), targetPose.getY()), -maxSpeedY, maxSpeedY);
     double thetaAlignSpeed = MathUtil.clamp(
-        thetaController.calculate(drive.getNewCurrentPose().getRotation().getRadians(),
+        thetaController.calculate(pose.getRotation().getRadians(),
             targetPose.getRotation().getRadians()),
         -maxSpeedTheta, maxSpeedTheta);
 
@@ -259,7 +259,7 @@ public class Align extends SubsystemBase {
     }
 
     if (Math
-        .abs(drive.getNewCurrentPose().getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
+        .abs(pose.getRotation().getRadians() - targetPose.getRotation().getRadians()) < goalErrors
             .getZ()) {
       thetaAlignSpeed = 0.0;
     }

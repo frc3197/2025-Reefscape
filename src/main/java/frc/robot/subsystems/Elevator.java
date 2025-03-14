@@ -172,16 +172,19 @@ public class Elevator extends SubsystemBase {
     calculatedPIDSpeed = emptyLoadPID.calculate(readEncoder());
 
     //calculatedPIDSpeed *= 0.015;
+    SmartDashboard.putNumber("Elevator position theoretical", emptyLoadPID.getSetpoint().position);
+    SmartDashboard.putNumber("Elevator position actual", readEncoder());
 
-    SmartDashboard.putNumber("Elevator PID calc", calculatedPIDSpeed);
-    SmartDashboard.putNumber("Elevator Speed", leftMotor.getVelocity(true).getValueAsDouble());
-    SmartDashboard.putNumber("Elevator Velocity NEW", emptyLoadPID.getSetpoint().velocity);
-    SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
+    SmartDashboard.putNumber("Elevator position error", emptyLoadPID.getSetpoint().position - targetHeightTicks);
+    //SmartDashboard.putNumber("Elevator PID calc", calculatedPIDSpeed);
+    //SmartDashboard.putNumber("Elevator Speed", leftMotor.getVelocity(true).getValueAsDouble());
+    //SmartDashboard.putNumber("Elevator Velocity NEW", emptyLoadPID.getSetpoint().velocity);
+    //SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
     
-    double finalSpeed = MathUtil.clamp((calculatedPIDSpeed * 1.05) + (feedForwardSpeed*1), -0.25, 1.0);
+    double finalSpeed = MathUtil.clamp((calculatedPIDSpeed * 1.0) + (feedForwardSpeed*1), -0.3, 1.0);
     SmartDashboard.putNumber("Elevator FINAL", finalSpeed);
 
-    finalSpeed = MathUtil.applyDeadband(finalSpeed, 0.09);
+    finalSpeed = MathUtil.applyDeadband(finalSpeed, 0.02);
     
     leftMotor.set(finalSpeed);
     rightMotor.set(finalSpeed);

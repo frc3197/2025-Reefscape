@@ -28,9 +28,9 @@ public class Constants {
 		public static class RedPositions {
 			// Front right positions
 			public static final Pose2d frontRightLPoseAlignRed = new Pose2d(13.78, 4.95,
-					new Rotation2d(Units.degreesToRadians(-120)));
+					new Rotation2d(Units.degreesToRadians(-124)));
 			public static final Pose2d frontRightRPoseAlignRed = new Pose2d(13.55, 5.14,
-					new Rotation2d(Units.degreesToRadians(-120)));
+					new Rotation2d(Units.degreesToRadians(-124)));
 
 			// Front center positions
 			public static final Pose2d frontCenterLPoseAlignRed = new Pose2d(14.45, 3.91,
@@ -142,13 +142,11 @@ public class Constants {
 		public static final int leftElevatorMotorId = 8;
 		public static final int rightElevatorMotorId = 9;
 
-		public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(300, 200);
+		public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(350, 300);
+//0.0535
+		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0.0, 0.0585, 0.0076, 0.6);
 
-		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0.005, 0.065, 0.01);
-
-		public static final ElevatorFeedforward algaeLoadElevatorFeed = new ElevatorFeedforward(0, 0, 0);
-
-		public static final ProfiledPIDController emptyLoadElevatorPID = new ProfiledPIDController(0.185, 0, 0.01, CONSTRAINTS);
+		public static final ProfiledPIDController emptyLoadElevatorPID = new ProfiledPIDController(0.01, 0, 0, CONSTRAINTS);
 
 		public static final TalonFXConfiguration leftElevatorMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()

@@ -103,7 +103,7 @@ public class AutoLookup {
                                                 new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
                                                                 new ChassisSpeeds(0.9, 0.725, 1.65),
                                                                 new Translation3d(0.015, 0.015, 0.01), 3)
-                                                                .withTimeout(0.7),
+                                                                .withTimeout(0.8),
                                                 RobotContainer.getScoreSequenceL4Command()),
 
                                 // Start intaking for second piece but end process after driving & delay
@@ -119,7 +119,7 @@ public class AutoLookup {
                                                                 new WaitCommand(0.0667),
                                                                 outtake.feedOuttake(0.0),
                                                                 elevator.setTargetHeightCommand(
-                                                                                Constants.ElevatorConstants.level2Encoder)),
+                                                                                Constants.ElevatorConstants.level4Encoder)),
                                                 new SequentialCommandGroup(
 
                                                                 // Go to second branch, front left L
@@ -128,11 +128,15 @@ public class AutoLookup {
                                                                 new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
                                                                                 new ChassisSpeeds(0.9, 0.725, 1.65),
                                                                                 new Translation3d(0.015, 0.015, 0.01),
-                                                                                2).withTimeout(1.2))),
+                                                                                2).withTimeout(0.6))),
 
                                 outtake.stopMotors(),
                                 // RobotContainer.getIntakeCommand(),
-                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 00),
+                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder),
+                                new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
+                                                new ChassisSpeeds(0.9, 0.725, 1.65),
+                                                new Translation3d(0.015, 0.015, 0.01),
+                                                2).withTimeout(0.6),
 
                                 // Place second piece
                                 RobotContainer.getScoreSequenceL4Command(),
@@ -140,7 +144,9 @@ public class AutoLookup {
                                 // Start intaking for third piece but end process after driving & delay
                                 loadPath("FrontLeftLToStation"),
 
-                                new WaitCommand(0.375),
+                                Commands.waitUntil(() -> {
+                                        return vision.detectsPiece();
+                                }).withTimeout(1.5),
                                 new ParallelCommandGroup(
                                                 new SequentialCommandGroup(
                                                                 RobotContainer.getAutoIntakeCommand(),

@@ -22,7 +22,7 @@ public class Climber extends SubsystemBase {
   public Climber() {
     this.climberArm = new TalonFX(16);
 
-    CurrentLimitsConfigs climberArmConfig = new CurrentLimitsConfigs().withStatorCurrentLimit(100).withStatorCurrentLimitEnable(true).withSupplyCurrentLimit(100).withSupplyCurrentLimitEnable(true);
+    CurrentLimitsConfigs climberArmConfig = new CurrentLimitsConfigs().withStatorCurrentLimit(160).withStatorCurrentLimitEnable(true).withSupplyCurrentLimit(160).withSupplyCurrentLimitEnable(true);
 
     this.climberArm.getConfigurator().apply(climberArmConfig);
 

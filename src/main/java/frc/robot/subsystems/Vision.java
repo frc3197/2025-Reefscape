@@ -14,6 +14,7 @@ import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 
 import edu.wpi.first.math.geometry.Pose3d;
@@ -33,7 +34,6 @@ import frc.robot.util.LimelightHelpers;
 public class Vision extends SubsystemBase {
 
   // Photonvision variables
-  private final PhotonCamera backCamera;
   private final PhotonCamera leftCamera;
   private final PhotonCamera rightCamera;
   private final Transform3d robotToBack = new Transform3d(new Translation3d(0.15, 0.0, 1),
@@ -62,7 +62,6 @@ public class Vision extends SubsystemBase {
   public Vision(CommandSwerveDrivetrain drive) {
     this.drive = drive;
 
-    this.backCamera = new PhotonCamera("camera-back");
     this.leftCamera = new PhotonCamera("camera-left");
     this.rightCamera = new PhotonCamera("camera-right");
     this.intakeCamera = new PhotonCamera("intake-camera");
@@ -86,15 +85,19 @@ public class Vision extends SubsystemBase {
 
     if (bestPose != null && bestPose.getX() != 0.0) {
       SmartDashboard.putBoolean("HAS VISION", true);
-      drive.addNewVisionMeasurement(bestPose.toPose2d(), getLimelightTime());
+      //drive.addVisionMeasurement(bestPose.toPose2d(), getLimelightTime(), VecBuilder.fill(0.05, 0.05, 0.05));
 
       double[] newVision = { bestPose.toPose2d().getX(), bestPose.toPose2d().getY(),
           bestPose.toPose2d().getRotation().getDegrees() };
-
       SmartDashboard.putNumberArray("LIMELIGHT VISION", newVision);
     } else {
       SmartDashboard.putBoolean("HAS VISION", false);
     }
+
+    double[] newVisionYes = { drive.getState().Pose.getX(), drive.getState().Pose.getY(),
+      drive.getState().Pose.getRotation().getDegrees() };
+
+    SmartDashboard.putNumberArray("ORIGINAL CTRE POSE", newVisionYes);
 
     pollPhotonCameras();
 
@@ -108,7 +111,7 @@ public class Vision extends SubsystemBase {
 
   // Returns time, needs to be fixed
   private double getLimelightTime() {
-    return Timer.getTimestamp();
+    return Utils.getCurrentTimeSeconds();
 
     /*
      * return Utils.fpgaToCurrentTime(Timer.getTimestamp()
@@ -121,29 +124,11 @@ public class Vision extends SubsystemBase {
   // Check photon camera outputs
   private void pollPhotonCameras() {
 
-    var backResult = backCamera.getLatestResult();
-    boolean backHasTargets = backResult.hasTargets();
-
     var leftResult = leftCamera.getLatestResult();
     boolean leftHasTargets = leftResult.hasTargets();
 
     var rightResult = rightCamera.getLatestResult();
     boolean rightHasTargets = rightResult.hasTargets();
-
-    SmartDashboard.putBoolean("hasTargets", backHasTargets);
-
-    if (backHasTargets && false) {
-      PhotonTrackedTarget target = backResult.getBestTarget();
-
-      // Get information from target
-      int targetID = target.getFiducialId();
-      double poseAmbiguity = target.getPoseAmbiguity();
-      Transform3d bestCameraToTarget = target.getBestCameraToTarget();
-      Transform3d alternateCameraToTarget = target.getAlternateCameraToTarget();
-
-      drive.addNewVisionMeasurement(new Pose2d(bestCameraToTarget.getX(), bestCameraToTarget.getY(),
-          bestCameraToTarget.getRotation().toRotation2d()), Timer.getFPGATimestamp());
-    }
 
     if (leftHasTargets) {
       PhotonTrackedTarget target = leftResult.getBestTarget();
@@ -157,13 +142,13 @@ public class Vision extends SubsystemBase {
       Transform3d robotOffset = target.getBestCameraToTarget();
 
       double[] newVision = { robotPose.toPose2d().getX(), robotPose.toPose2d().getY(),
-        robotPose.toPose2d().getRotation().getDegrees() };
+          robotPose.toPose2d().getRotation().getDegrees() };
 
       SmartDashboard.putNumberArray("LEFT CAMERA VISION", newVision);
 
       if (Math.sqrt(
           Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
-        drive.addNewVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds());
+        drive.addVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds(), VecBuilder.fill(0.05, 0.05, 0.05));
     }
 
     if (rightHasTargets) {
@@ -179,13 +164,13 @@ public class Vision extends SubsystemBase {
       Transform3d robotOffset = target.getBestCameraToTarget();
 
       double[] newVision = { robotPose.toPose2d().getX(), robotPose.toPose2d().getY(),
-        robotPose.toPose2d().getRotation().getDegrees() };
+          robotPose.toPose2d().getRotation().getDegrees() };
 
       SmartDashboard.putNumberArray("RIGHT CAMERA VISION", newVision);
 
       if (Math.sqrt(
           Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
-        drive.addNewVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds());
+        drive.addVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds(), VecBuilder.fill(0.05, 0.05, 0.05));
     }
   }
 
@@ -205,7 +190,7 @@ public class Vision extends SubsystemBase {
       RobotContainer.setRobotMode(RobotMode.DETECTS_PIECE);
       return;
     }
-    if(RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE) {
+    if (RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE) {
       RobotContainer.setRobotMode(RobotMode.NONE);
     }
   }

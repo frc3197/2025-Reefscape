@@ -24,7 +24,7 @@ public class LightManager extends SubsystemBase {
   public LightManager() {
 
     this.led = new AddressableLED(1);
-    this.buffer = new AddressableLEDBuffer(60 + 102);
+    this.buffer = new AddressableLEDBuffer(60 + 102 + 15 + 28 + 9 + 1);
     this.led.setLength(buffer.getLength());
 
     // Set the data
@@ -42,26 +42,26 @@ public class LightManager extends SubsystemBase {
 
     // Check for errors first
     if (RobotContainer.hasErrors()) {
-      //checkErrorLights();
+      checkErrorLights();
       return;
     }
 
     SmartDashboard.putBoolean("Has Alert", RobotContainer.hasAlert(AlertMode.FULLY_ALIGNED));
     if (RobotContainer.hasAlerts()) {
-      //checkAlertLights();
+      checkAlertLights();
       return;
     }
 
     if (RobotContainer.getEnabled() && RobotContainer.getRobotMode() != RobotMode.NONE) {
-      //checkModeLights();
+      checkModeLights();
       return;
     }
 
     if (!RobotContainer.getEnabled()) {
       if (DriverStation.getAlliance().isEmpty()) {
-        //patternSetIdleOrange();
+        patternSetIdleOrange();
       } else {
-        //patternSetIdleAlliance();
+        patternSetIdleAlliance();
       }
       return;
     }

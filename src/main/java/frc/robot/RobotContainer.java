@@ -82,7 +82,7 @@ public class RobotContainer {
     // Controllers
     private final static CommandXboxController driverController = new CommandXboxController(0);
     private final static CommandXboxController operatorController = new CommandXboxController(1);
-    //private final static CommandXboxController extraController = new CommandXboxController(2);
+    private final static CommandXboxController extraController = new CommandXboxController(2);
     private final static CommandXboxController[] controllers = { driverController, operatorController };
 
     // Robot statuses
@@ -270,12 +270,15 @@ public class RobotContainer {
         // EXTRA TESTING COMMANDS
         // -------------------------------------------------------------------------
 
-        /*extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
+        extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
                 extraController::getLeftTriggerAxis))
                 .onFalse(climber.setClimberArmSpeed(0));
         extraController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() -> {
             return -1 * extraController.getRightTriggerAxis();
-        })).onFalse(climber.setClimberArmSpeed(0));*/
+        })).onFalse(climber.setClimberArmSpeed(0));
+
+        extraController.a().onTrue(elevator.setTargetHeightCommand(8.25).andThen(algae.setTargetAngleDegrees(45))).onFalse(elevator.setTargetHeightCommand(0).andThen(algae.setTargetAngleDegrees(90)));
+        extraController.b().onTrue(elevator.setTargetHeightCommand(1.25).andThen(algae.setTargetAngleDegrees(20))).onFalse(elevator.setTargetHeightCommand(0).andThen(algae.setTargetAngleDegrees(90)));
 
     }
 
@@ -421,13 +424,13 @@ public class RobotContainer {
                 // Set pose, better and more reliable than vision for now in case of miss
                 drivetrain.runOnce(() -> {
                     if (isRed())
-                        drivetrain.resetNewPose(new Pose2d(10.321, 1.915, new Rotation2d(Units.degreesToRadians(180))));
+                        drivetrain.resetPose(new Pose2d(10.321, 1.915, new Rotation2d(Units.degreesToRadians(180))));
                     else
                         /*
                          * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
                          * new Rotation2d(Units.degreesToRadians(0))));
                          */
-                        drivetrain.resetNewPose(new Pose2d(7.229, 5.416, new Rotation2d(Units.degreesToRadians(0))));
+                        drivetrain.resetPose(new Pose2d(7.229, 5.416, new Rotation2d(Units.degreesToRadians(0))));
                 }),
                 autoLookup.getAuto());
 
@@ -440,7 +443,7 @@ public class RobotContainer {
                     drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0));
                 })
                 .andThen(Commands.waitUntil(() -> {
-                    return elevator.getPositionError() < 250;
+                    return elevator.getPositionError() < 2.9;
                 }).withTimeout(2)).andThen(outtake.feedOuttake(0.425)).andThen(new WaitCommand(0.22)).andThen(elevator
                         .setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                 .andThen(outtake.feedOuttake(0))
@@ -476,7 +479,7 @@ public class RobotContainer {
 
     public static Command getAlgaeIntakeFloorCommand() {
         return new SequentialCommandGroup(
-                algae.setTargetAngleDegrees(-11)
+                algae.setTargetAngleDegrees(-14.5)
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                         .andThen(algae.setAlgaeGrabberSpeedCommand(-0.8))
                         .andThen(Commands.waitUntil(algae.getHasAlgaeSupplier()))
