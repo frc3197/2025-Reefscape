@@ -83,9 +83,12 @@ public class Vision extends SubsystemBase {
     SmartDashboard.putNumber("Timestamp", getLimelightTime());
     SmartDashboard.putNumber("Limelight tag", LimelightHelpers.getFiducialID(""));
 
+    LimelightHelpers.SetRobotOrientation("", drive.getState().Pose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
+
     if (bestPose != null && bestPose.getX() != 0.0) {
       SmartDashboard.putBoolean("HAS VISION", true);
-      //drive.addVisionMeasurement(bestPose.toPose2d(), getLimelightTime(), VecBuilder.fill(0.05, 0.05, 0.05));
+      drive.addVisionMeasurement(bestPose.toPose2d(), getLimelightTime(),
+          VecBuilder.fill(0.05, 0.05, Double.POSITIVE_INFINITY));
 
       double[] newVision = { bestPose.toPose2d().getX(), bestPose.toPose2d().getY(),
           bestPose.toPose2d().getRotation().getDegrees() };
@@ -95,7 +98,7 @@ public class Vision extends SubsystemBase {
     }
 
     double[] newVisionYes = { drive.getState().Pose.getX(), drive.getState().Pose.getY(),
-      drive.getState().Pose.getRotation().getDegrees() };
+        drive.getState().Pose.getRotation().getDegrees() };
 
     SmartDashboard.putNumberArray("ORIGINAL CTRE POSE", newVisionYes);
 
@@ -145,10 +148,15 @@ public class Vision extends SubsystemBase {
           robotPose.toPose2d().getRotation().getDegrees() };
 
       SmartDashboard.putNumberArray("LEFT CAMERA VISION", newVision);
+      SmartDashboard.putNumber("LEFT CAMERA LATENCY", Timer.getTimestamp() - leftResult.getTimestampSeconds());
 
-      if (Math.sqrt(
-          Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
-        drive.addVisionMeasurement(robotPose.toPose2d(), leftResult.getTimestampSeconds(), VecBuilder.fill(0.05, 0.05, 0.05));
+      double distance = Math.sqrt(
+          Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2));
+
+      if (distance < 2 && target.getPoseAmbiguity() <= 0.2)
+        drive.addVisionMeasurement(robotPose.toPose2d(),
+            Utils.getCurrentTimeSeconds() - (Timer.getTimestamp() - leftResult.getTimestampSeconds()),
+            VecBuilder.fill((distance / 2.0), (distance / 2.0), Double.POSITIVE_INFINITY));
     }
 
     if (rightHasTargets) {
@@ -167,10 +175,15 @@ public class Vision extends SubsystemBase {
           robotPose.toPose2d().getRotation().getDegrees() };
 
       SmartDashboard.putNumberArray("RIGHT CAMERA VISION", newVision);
+      SmartDashboard.putNumber("RIGHT CAMERA LATENCY", Timer.getTimestamp() - rightResult.getTimestampSeconds());
 
-      if (Math.sqrt(
-          Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2)) < 2)
-        drive.addVisionMeasurement(robotPose.toPose2d(), rightResult.getTimestampSeconds(), VecBuilder.fill(0.05, 0.05, 0.05));
+      double distance = Math.sqrt(
+          Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2));
+
+      if (distance < 2 && target.getPoseAmbiguity() <= 0.2)
+        drive.addVisionMeasurement(robotPose.toPose2d(),
+            Utils.getCurrentTimeSeconds() - (Timer.getTimestamp() - rightResult.getTimestampSeconds()),
+            VecBuilder.fill((distance / 2.0), (distance / 2.0), Double.POSITIVE_INFINITY));
     }
   }
 

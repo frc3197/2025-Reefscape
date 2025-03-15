@@ -28,9 +28,9 @@ public class Constants {
 		public static class RedPositions {
 			// Front right positions
 			public static final Pose2d frontRightLPoseAlignRed = new Pose2d(13.78, 4.95,
-					new Rotation2d(Units.degreesToRadians(-124)));
+					new Rotation2d(Units.degreesToRadians(-120)));
 			public static final Pose2d frontRightRPoseAlignRed = new Pose2d(13.55, 5.14,
-					new Rotation2d(Units.degreesToRadians(-124)));
+					new Rotation2d(Units.degreesToRadians(-120)));
 
 			// Front center positions
 			public static final Pose2d frontCenterLPoseAlignRed = new Pose2d(14.45, 3.91,
@@ -73,9 +73,9 @@ public class Constants {
 		public static class BluePositions {
 			// Front right positions
 			public static final Pose2d frontRightLPoseAlignBlue = new Pose2d(3.77, 3.09,
-					new Rotation2d(Units.degreesToRadians(64)));
+					new Rotation2d(Units.degreesToRadians(60)));
 			public static final Pose2d frontRightRPoseAlignBlue = new Pose2d(4.02, 2.87,
-					new Rotation2d(Units.degreesToRadians(68.5)));
+					new Rotation2d(Units.degreesToRadians(60)));
 
 			// Front center positions
 			public static final Pose2d frontCenterLPoseAlignBlue = new Pose2d(3.177, 4.193,
@@ -85,15 +85,15 @@ public class Constants {
 
 			// Front left positions
 			public static final Pose2d frontLeftLPoseAlignBlue = new Pose2d(4.015, 5.13,
-					new Rotation2d(Units.degreesToRadians(-56)));
+					new Rotation2d(Units.degreesToRadians(-62)));
 			public static final Pose2d frontLeftRPoseAlignBlue = new Pose2d(3.71, 5.06,
-					new Rotation2d(Units.degreesToRadians(-56)));
+					new Rotation2d(Units.degreesToRadians(-62)));
 
 			// Back left positions
 			public static final Pose2d backLeftLPoseAlignBlue = new Pose2d(4.975, 5.224,
-					new Rotation2d(Units.degreesToRadians(-115.75)));
+					new Rotation2d(Units.degreesToRadians(-120)));
 			public static final Pose2d backLeftRPoseAlignBlue = new Pose2d(5.21, 4.98,
-					new Rotation2d(Units.degreesToRadians(-115.75)));
+					new Rotation2d(Units.degreesToRadians(-120)));
 
 			// Back center positions
 			public static final Pose2d backCenterLPoseAlignBlue = new Pose2d(5.76, 4.15,
@@ -146,7 +146,7 @@ public class Constants {
 //0.0535
 		public static final ElevatorFeedforward emptyLoadElevatorFeed = new ElevatorFeedforward(0.0, 0.0585, 0.0076, 0.6);
 
-		public static final ProfiledPIDController emptyLoadElevatorPID = new ProfiledPIDController(0.01, 0, 0, CONSTRAINTS);
+		public static final ProfiledPIDController emptyLoadElevatorPID = new ProfiledPIDController(0.06, 0, 0.01, CONSTRAINTS);
 
 		public static final TalonFXConfiguration leftElevatorMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()

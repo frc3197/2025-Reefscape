@@ -181,7 +181,7 @@ public class Elevator extends SubsystemBase {
     //SmartDashboard.putNumber("Elevator Velocity NEW", emptyLoadPID.getSetpoint().velocity);
     //SmartDashboard.putNumber("Feed Elevator Calculation", feedForwardSpeed);
     
-    double finalSpeed = MathUtil.clamp((calculatedPIDSpeed * 1.0) + (feedForwardSpeed*1), -0.3, 1.0);
+    double finalSpeed = MathUtil.clamp((calculatedPIDSpeed * 1.0) + (feedForwardSpeed*1), -0.25, 1.0);
     SmartDashboard.putNumber("Elevator FINAL", finalSpeed);
 
     finalSpeed = MathUtil.applyDeadband(finalSpeed, 0.02);

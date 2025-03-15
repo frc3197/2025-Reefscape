@@ -207,7 +207,7 @@ public class Algae extends SubsystemBase {
       pidSpeed = -emptyArmPID.calculate((targetAlgaeAngle - convertTicksToDegrees(algaeEncoder.get()))/10);
     }
 
-    double combinedSpeed = MathUtil.clamp(pidSpeed, -0.1, 0.1);
+    double combinedSpeed = MathUtil.clamp(pidSpeed, -0.4, 0.4);
     deployMotor.set(combinedSpeed + feedForwardSpeed);
   }
 

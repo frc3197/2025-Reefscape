@@ -82,7 +82,7 @@ public class RobotContainer {
     // Controllers
     private final static CommandXboxController driverController = new CommandXboxController(0);
     private final static CommandXboxController operatorController = new CommandXboxController(1);
-    private final static CommandXboxController extraController = new CommandXboxController(2);
+    private final static CommandXboxController climbController = new CommandXboxController(2);
     private final static CommandXboxController[] controllers = { driverController, operatorController };
 
     // Robot statuses
@@ -175,39 +175,16 @@ public class RobotContainer {
                 .onFalse(new InstantCommand(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0))));
 
         driverController.leftTrigger().whileTrue(new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
-                new ChassisSpeeds(0.85, 0.85, 1.5), new Translation3d(0.015, 0.015, 0.01)));
-        // .onFalse(new InstantCommand(() -> addAlert(new
-        // AlertBody(AlertMode.FULLY_ALIGNED, 0.5))));
+                new ChassisSpeeds(0.95, 1.0, 1.85), new Translation3d(0.015, 0.015, 0.01)));
 
         driverController.rightTrigger().whileTrue(new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
                 new ChassisSpeeds(0.85, 0.85, 1.5), new Translation3d(0.015, 0.015, 0.01)));
-        // .onFalse(new InstantCommand(() -> addAlert(new
-        // AlertBody(AlertMode.FULLY_ALIGNED, 0.5))));
 
-        /*
-         * // Brake
-         * driverController.leftBumper().whileTrue(Commands.run(() -> {
-         * drivetrain.driveRobotRelative(new ChassisSpeeds(0.55, 0.0, 0));
-         * }));
-         */
         driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         // -------------------------------------------------------------------------
         // Elevator bindings
         // -------------------------------------------------------------------------
-
-        /*
-         * operatorController.leftTrigger(0.05)
-         * .whileTrue(elevator.getManualCommand(driverController::getLeftTriggerAxis))
-         * .onFalse(elevator.getManualCommand(0.0));
-         * operatorController.rightTrigger(0.05).whileTrue(elevator.getManualCommand(()
-         * -> {
-         * return -1 * driverController.getRightTriggerAxis();
-         * })).onFalse(elevator.getManualCommand(0.0));
-         */
-
-        // driverController.y().onTrue(elevator.getManualCommand(0.5)).onFalse(elevator.getManualCommand(0.0));
-        // driverController.a().onTrue(elevator.getManualCommand(-0.4)).onFalse(elevator.getManualCommand(0.0));
 
         operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0));
         operatorController.y()
@@ -270,15 +247,12 @@ public class RobotContainer {
         // EXTRA TESTING COMMANDS
         // -------------------------------------------------------------------------
 
-        extraController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
-                extraController::getLeftTriggerAxis))
+        climbController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
+            climbController::getLeftTriggerAxis))
                 .onFalse(climber.setClimberArmSpeed(0));
-        extraController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() -> {
-            return -1 * extraController.getRightTriggerAxis();
+                climbController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() -> {
+            return -1 * climbController.getRightTriggerAxis();
         })).onFalse(climber.setClimberArmSpeed(0));
-
-        extraController.a().onTrue(elevator.setTargetHeightCommand(8.25).andThen(algae.setTargetAngleDegrees(45))).onFalse(elevator.setTargetHeightCommand(0).andThen(algae.setTargetAngleDegrees(90)));
-        extraController.b().onTrue(elevator.setTargetHeightCommand(1.25).andThen(algae.setTargetAngleDegrees(20))).onFalse(elevator.setTargetHeightCommand(0).andThen(algae.setTargetAngleDegrees(90)));
 
     }
 
@@ -407,7 +381,7 @@ public class RobotContainer {
                 outtake.feedOuttake(0.08),
                 Commands.waitUntil(() -> {
                     return !outtake.detectsCoralSupplier().getAsBoolean();
-                }),
+                }).withTimeout(1.2),
                 new InstantCommand(() -> {
                     if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
                         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 0.25));
@@ -444,7 +418,8 @@ public class RobotContainer {
                 })
                 .andThen(Commands.waitUntil(() -> {
                     return elevator.getPositionError() < 2.9;
-                }).withTimeout(2)).andThen(outtake.feedOuttake(0.425)).andThen(new WaitCommand(0.22)).andThen(elevator
+                }).withTimeout(2)).andThen(new WaitCommand(0.25).andThen(outtake.feedOuttake(0.25)))
+                .andThen(new WaitCommand(0.22)).andThen(elevator
                         .setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                 .andThen(outtake.feedOuttake(0))
                 .andThen(() -> {
