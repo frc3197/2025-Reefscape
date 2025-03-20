@@ -10,19 +10,23 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 
 public class Climber extends SubsystemBase {
   /** Creates a new Climber. */
 
   private TalonFX climberArm;
 
+  private DigitalInput limit = new DigitalInput(4);
+
   public Climber() {
     this.climberArm = new TalonFX(16);
 
-    CurrentLimitsConfigs climberArmConfig = new CurrentLimitsConfigs().withStatorCurrentLimit(160).withStatorCurrentLimitEnable(true).withSupplyCurrentLimit(160).withSupplyCurrentLimitEnable(true);
+    CurrentLimitsConfigs climberArmConfig = new CurrentLimitsConfigs().withStatorCurrentLimit(55).withStatorCurrentLimitEnable(true).withSupplyCurrentLimit(25).withSupplyCurrentLimitEnable(true);
 
     this.climberArm.getConfigurator().apply(climberArmConfig);
 
@@ -36,13 +40,37 @@ public class Climber extends SubsystemBase {
 
   public Command setClimberArmSpeed(double speed) {
     return Commands.runOnce(() -> {
-      climberArm.set(speed*1);
+
+      if(speed < 0) {
+        climberArm.set(speed);
+        return;
+      } else {
+        if (!(limit.get() && speed > 0)) {
+          climberArm.set(0);
+        } else {
+          climberArm.set(speed);
+        }
+      }
+    });
+  }
+
+  public Command setClimberSpeedValue(double speed) {
+    return Commands.runOnce(() -> {
+      climberArm.set(speed);
     });
   }
   
   public Command setClimberArmSpeed(Supplier<Double> speed) {
     return Commands.runOnce(() -> {
-      climberArm.set(speed.get()*1);
+      if(speed.get() < 0) {
+        climberArm.set(speed.get());
+      } else {
+        if (!(limit.get() && speed.get() > 0)) {
+          climberArm.set(0);
+        } else {
+          climberArm.set(speed.get());
+        }
+      }
     });
   }
 }

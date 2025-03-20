@@ -22,6 +22,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -53,7 +55,7 @@ import frc.robot.util.*;
 public class RobotContainer {
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(TunerConstants.MaxSpeed * 0.05).withRotationalDeadband(TunerConstants.MaxAngularRate * 0.05) // Add
+            .withDeadband(TunerConstants.MaxSpeed * 0.025).withRotationalDeadband(TunerConstants.MaxAngularRate * 0.025) // Add
                                                                                                                        // a
                                                                                                                        // 10%
                                                                                                                        // deadband
@@ -90,6 +92,7 @@ public class RobotContainer {
     private static boolean isTestMode = false;
     private static boolean hasAlgae = false;
     private static RobotMode robotMode;
+    private static NetworkTable autoTable = NetworkTableInstance.getDefault().getTable("Auto"); 
 
     public RobotContainer() {
         configureBindings();
@@ -112,14 +115,6 @@ public class RobotContainer {
                         // negative X (left)
                         ));
 
-        /*
-         * driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
-         * driverController.b().whileTrue(drivetrain.applyRequest(
-         * () -> point.withModuleDirection(
-         * new Rotation2d(-driverController.getLeftY(),
-         * -driverController.getLeftX()))));
-         */
-
         // -------------------------------------------------------------------------
         // Drive & align bindings
         // -------------------------------------------------------------------------
@@ -132,19 +127,6 @@ public class RobotContainer {
          * -driverController.getLeftX()))));
          */
 
-        /*
-         * driverController.leftTrigger().onTrue(
-         * elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder)
-         * .andThen(Commands.runOnce(() -> {
-         * align.alignReefRough(AlignRequestType.LEFT_REEF_ALIGN);
-         * })));
-         * driverController.rightTrigger().onTrue(
-         * elevator.setTargetHeightCommand(Constants.ElevatorConstants.alignIdleEncoder)
-         * .andThen(Commands.runOnce(() -> {
-         * align.alignReefRough(AlignRequestType.RIGHT_REEF_ALIGN);
-         * })));
-         */
-
         // Bump up elevator
         operatorController.back().onTrue(elevator.setTargetHeightCommand(() -> {
             return elevator.getTargetHeight() + 2.5;
@@ -153,16 +135,6 @@ public class RobotContainer {
         operatorController.rightStick().onTrue(elevator.setTargetHeightCommand(() -> {
             return elevator.getTargetHeight() - 1.5;
         }));
-
-        /*
-         * driverController.rightStick().whileTrue(new AlignBarge(align)
-         * .andThen(new InstantCommand(() -> addAlert(new
-         * AlertBody(AlertMode.FULLY_ALIGNED, 0.8)))));
-         * 
-         * new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
-         * new ChassisSpeeds(0.7, 0.525, 1.65),
-         * new Translation3d(0.05, 0.05, 0.01), 2).withTimeout(1.2)
-         */
 
         driverController.rightStick().onTrue(outtake.setFeed(-0.2)).onFalse(outtake.setFeed(0.0));
         driverController.leftStick().onTrue(outtake.setFeed(0.28)).onFalse(outtake.setFeed(0.0));
@@ -250,9 +222,11 @@ public class RobotContainer {
         climbController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
             climbController::getLeftTriggerAxis))
                 .onFalse(climber.setClimberArmSpeed(0));
-                climbController.rightTrigger(0.2).whileTrue(climber.setClimberArmSpeed(() -> {
-            return -1 * climbController.getRightTriggerAxis();
-        })).onFalse(climber.setClimberArmSpeed(0));
+        climbController.rightTrigger(0.2).whileTrue(climber.setClimberSpeedValue(
+            -1*climbController.getRightTriggerAxis()
+        )).onFalse(climber.setClimberArmSpeed(0));
+
+        climbController.rightBumper().onTrue(climber.setClimberSpeedValue(-0.35)).onFalse(climber.setClimberSpeedValue(0));
 
     }
 
@@ -406,7 +380,8 @@ public class RobotContainer {
                          */
                         drivetrain.resetPose(new Pose2d(7.229, 5.416, new Rotation2d(Units.degreesToRadians(0))));
                 }),
-                autoLookup.getAuto());
+                //autoLookup.getAuto(autoTable.getEntry("autoMode").getString("Nothing")));
+                autoLookup.getAuto("Left 3 Piece"));
 
         // return new PathPlannerAuto("FarAuto");
     }
@@ -441,7 +416,7 @@ public class RobotContainer {
     }
 
     public static Command getAlgaeScoreBargeInitial() {
-        return algae.setTargetAngleDegrees(67)
+        return algae.setTargetAngleDegrees(68.5)
                 .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0));
     }
 
@@ -454,7 +429,7 @@ public class RobotContainer {
 
     public static Command getAlgaeIntakeFloorCommand() {
         return new SequentialCommandGroup(
-                algae.setTargetAngleDegrees(-14.5)
+                algae.setTargetAngleDegrees(-15.5)
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                         .andThen(algae.setAlgaeGrabberSpeedCommand(-0.8))
                         .andThen(Commands.waitUntil(algae.getHasAlgaeSupplier()))

@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.enums.RobotMode;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.LimelightHelpers.PoseEstimate;
 
 @SuppressWarnings("unused")
 public class Vision extends SubsystemBase {
@@ -78,43 +80,41 @@ public class Vision extends SubsystemBase {
   @Override
   public void periodic() {
 
-    Pose3d bestPose = getDesiredPose();
-
-    SmartDashboard.putNumber("Timestamp", getLimelightTime());
-    SmartDashboard.putNumber("Limelight tag", LimelightHelpers.getFiducialID(""));
-
     LimelightHelpers.SetRobotOrientation("", drive.getState().Pose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
 
-    if (bestPose != null && bestPose.getX() != 0.0) {
+    PoseEstimate bestPose = getDesiredPose();
+
+    //SmartDashboard.putNumber("Timestamp", getLimelightTime(bestPose));
+    SmartDashboard.putNumber("Limelight dist", bestPose.avgTagDist);
+
+    if (bestPose.avgTagDist != 0.0) {
       SmartDashboard.putBoolean("HAS VISION", true);
-      drive.addVisionMeasurement(bestPose.toPose2d(), getLimelightTime(),
+      drive.addVisionMeasurement(bestPose.pose, getLimelightTime(bestPose),
           VecBuilder.fill(0.05, 0.05, Double.POSITIVE_INFINITY));
 
-      double[] newVision = { bestPose.toPose2d().getX(), bestPose.toPose2d().getY(),
-          bestPose.toPose2d().getRotation().getDegrees() };
+      double[] newVision = { bestPose.pose.getX(), bestPose.pose.getY(),
+          bestPose.pose.getRotation().getDegrees() };
       SmartDashboard.putNumberArray("LIMELIGHT VISION", newVision);
     } else {
       SmartDashboard.putBoolean("HAS VISION", false);
     }
 
-    double[] newVisionYes = { drive.getState().Pose.getX(), drive.getState().Pose.getY(),
-        drive.getState().Pose.getRotation().getDegrees() };
-
-    SmartDashboard.putNumberArray("ORIGINAL CTRE POSE", newVisionYes);
-
     pollPhotonCameras();
 
     checkIntakeCamera();
+
+    SmartDashboard.putString("Auto mode", NetworkTableInstance.getDefault().getTable("Auto").getEntry("autoMode").getString("Nothing"));
   }
 
   // Returns the best vision pose, for updating pose estimator
-  private Pose3d getDesiredPose() {
-    return LimelightHelpers.getBotPose3d_wpiBlue("");
+  private PoseEstimate getDesiredPose() {
+    return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("");
+    //return LimelightHelpers.getBotPose3d_wpiBlue("");
   }
 
   // Returns time, needs to be fixed
-  private double getLimelightTime() {
-    return Utils.getCurrentTimeSeconds();
+  private double getLimelightTime(PoseEstimate poseTime) {
+    return poseTime.timestampSeconds;
 
     /*
      * return Utils.fpgaToCurrentTime(Timer.getTimestamp()

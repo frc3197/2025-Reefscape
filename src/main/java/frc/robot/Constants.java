@@ -72,7 +72,7 @@ public class Constants {
 
 		public static class BluePositions {
 			// Front right positions
-			public static final Pose2d frontRightLPoseAlignBlue = new Pose2d(3.77, 3.09,
+			public static final Pose2d frontRightLPoseAlignBlue = new Pose2d(3.74, 3.07,
 					new Rotation2d(Units.degreesToRadians(60)));
 			public static final Pose2d frontRightRPoseAlignBlue = new Pose2d(4.02, 2.87,
 					new Rotation2d(Units.degreesToRadians(60)));
@@ -184,7 +184,7 @@ public class Constants {
 		public static final int alignIdleEncoder = 6500/1000;
 
 		public static final int lowAlgaeEncoder = 19500/1000;
-		public static final int highAlgaeEncoder = 29250/1000;
+		public static final int highAlgaeEncoder = 30;
 
 		public static final double elevatorSlewRate = 0.2;
 	}

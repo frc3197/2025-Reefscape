@@ -27,7 +27,7 @@ public class TunerConstants {
 
 
     public static double MaxSpeed = kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    public static double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second
+    public static double MaxAngularRate = RotationsPerSecond.of(1.25).in(RadiansPerSecond); // 1.25 rotation per second
 
     // Both sets of gains need to be tuned to your individual robot.
 
