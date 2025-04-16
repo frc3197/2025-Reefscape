@@ -4,6 +4,7 @@
 
 package frc.robot.managersubsystems;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -55,6 +56,8 @@ public class LightManager extends SubsystemBase {
     if (RobotContainer.getEnabled() && RobotContainer.getRobotMode() != RobotMode.NONE) {
       checkModeLights();
       return;
+    } else {
+      SmartDashboard.putString("Robot Mode", "NONE");
     }
 
     if (!RobotContainer.getEnabled()) {
@@ -79,6 +82,8 @@ public class LightManager extends SubsystemBase {
       patternSetElevatorError();
     } else if (RobotContainer.hasError(ErrorMode.NO_LIMELIGHT)) {
       patternSetLimelightError();
+    } else if(RobotContainer.hasError(ErrorMode.NO_LASER_CAN)) {
+      patternSetLaserCanCoralError();
     } else {
       patternSetOrangePiError();
     }
@@ -124,9 +129,27 @@ public class LightManager extends SubsystemBase {
 
   // Limelight error
   private void patternSetLimelightError() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      // Sets the specified LED to the GRB values for red
-      buffer.setRGB(i, 90, 0, 0);
+    if (Timer.getTimestamp() % 2 <= 1)
+      for (int i = 0; i < buffer.getLength(); i++) {
+        buffer.setRGB(i, 90, 0, 0);
+      }
+    else {
+      for (int i = 0; i < buffer.getLength(); i++) {
+        buffer.setRGB(i, 0, 0, 0);
+      }
+    }
+    led.setData(buffer);
+  }
+
+  private void patternSetLaserCanCoralError() {
+    if (Timer.getTimestamp() % 2 <= 1)
+      for (int i = 0; i < buffer.getLength(); i++) {
+        buffer.setRGB(i, 155, 155, 0);
+      }
+    else {
+      for (int i = 0; i < buffer.getLength(); i++) {
+        buffer.setRGB(i, 0, 0, 0);
+      }
     }
     led.setData(buffer);
   }
@@ -225,6 +248,23 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
+  // Orange climb pattern
+  private void patternSetFullyClimbed() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+
+      double intensity = (Math.sin((i / 3.0) + (Timer.getTimestamp() * 7.0)));
+
+      if (intensity < 0) {
+        intensity = 0;
+      }
+
+      buffer.setRGB(i, (int) (80.0 * intensity), (int) (255.0 * intensity), 0);
+      // buffer.setRGB(i, (int) (80.0 * intensity), (int) (255.0 * intensity), 0);
+    }
+    led.setData(buffer);
+  }
+
   // Turn off lights
   private void turnOffLights() {
     for (int i = 0; i < buffer.getLength(); i++) {
@@ -250,6 +290,22 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
+  private void patternSetSeesAlgae() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 20, 0, 0);
+    }
+    led.setData(buffer);
+  }
+
+  private void patternSetSeesNoAlgae() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+      buffer.setRGB(i, 0, 200, 0);
+    }
+    led.setData(buffer);
+  }
+
   private void patternSetAlignCustom() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
@@ -257,7 +313,7 @@ public class LightManager extends SubsystemBase {
     }
     led.setData(buffer);
   }
-  
+
   private void patternSetAlignBlue() {
     for (int i = 0; i < buffer.getLength(); i++) {
       // Sets the specified LED to the GRB values for red
@@ -266,21 +322,43 @@ public class LightManager extends SubsystemBase {
     led.setData(buffer);
   }
 
+  private void patternSetAlignNet() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      // Sets the specified LED to the GRB values for red
+
+      double intensity = (Math.sin((i / 5.0) + (Timer.getTimestamp() * 3.0)));
+
+      intensity = MathUtil.clamp(intensity, 0, 1);
+
+      buffer.setRGB(i, (int) (80.0 * intensity), 0, (int) (255.0 * (1 - intensity)));
+    }
+    led.setData(buffer);
+  }
+
   private void checkModeLights() {
-    if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_ROUGH) {
-      patternSetAlignRough();
-      return;
-    } else if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_FINE) {
-      patternSetAlignFine();
+    if (RobotContainer.getRobotMode() == RobotMode.NET_ALIGNED) {
+      patternSetAlignNet();
+      SmartDashboard.putString("Robot Mode", "NET ALIGN");
       return;
     } else if (RobotContainer.getRobotMode() == RobotMode.ALIGN_REEF_CUSTOM) {
       patternSetAlignCustom();
+      SmartDashboard.putString("Robot Mode", "REEF ALIGN");
       return;
-    } else if (RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE) {
+    } else if (RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE && DriverStation.isAutonomous()) {
       patternSetAlignBlue();
+      SmartDashboard.putString("Robot Mode", "DETECTS PIECE");
       return;
+    } else if (RobotContainer.getRobotMode() == RobotMode.FULLY_CLIMBED) {
+      patternSetFullyClimbed();
+      SmartDashboard.putString("Robot Mode", "FULLY CLIMBED");
+      return;
+    } else if(RobotContainer.getRobotMode() == RobotMode.SEES_ALGAE) {
+      patternSetSeesAlgae();
+    } else if(RobotContainer.getRobotMode() == RobotMode.SEES_NO_ALGAE) {
+      patternSetSeesNoAlgae();
     } else {
       turnOffLights();
+      SmartDashboard.putString("Robot Mode", "NONE");
       return;
     }
   }

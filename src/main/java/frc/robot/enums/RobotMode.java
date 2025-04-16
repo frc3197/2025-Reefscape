@@ -6,11 +6,12 @@ package frc.robot.enums;
 
 
 public enum RobotMode {
-    ALIGN_REEF_ROUGH,
-    ALIGN_REEF_FINE,
     ALIGN_REEF_CUSTOM,
-    ALIGN_PROCESSOR,
-    TRACK_STATION,
     DETECTS_PIECE,
+    FULLY_CLIMBED,
+    NET_ALIGNED,
+    TIPPING_DANGER,
+    SEES_ALGAE,
+    SEES_NO_ALGAE,
     NONE
 }

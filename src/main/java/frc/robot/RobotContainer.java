@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import org.json.simple.parser.ParseException;
 
@@ -17,6 +18,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.FileVersionException;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -27,6 +30,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -34,6 +39,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Algae;
@@ -56,10 +62,17 @@ public class RobotContainer {
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(TunerConstants.MaxSpeed * 0.025).withRotationalDeadband(TunerConstants.MaxAngularRate * 0.025) // Add
-                                                                                                                       // a
-                                                                                                                       // 10%
-                                                                                                                       // deadband
+                                                                                                                         // a
+                                                                                                                         // 10%
+                                                                                                                         // deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+
+    private final SwerveRequest.RobotCentric algaeDrive = new SwerveRequest.RobotCentric()
+            .withDeadband(TunerConstants.MaxSpeed * 0.025).withRotationalDeadband(TunerConstants.MaxAngularRate * 0.025) // Add
+                                                                                                                         // a
+                                                                                                                         // 10%
+                                                                                                                         // deadband
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -92,28 +105,39 @@ public class RobotContainer {
     private static boolean isTestMode = false;
     private static boolean hasAlgae = false;
     private static RobotMode robotMode;
-    private static NetworkTable autoTable = NetworkTableInstance.getDefault().getTable("Auto"); 
+    // private static NetworkTable autoTable =
+    // NetworkTableInstance.getDefault().getTable("Auto");
+
+    private SendableChooser<String> autoSelecter = new SendableChooser<String>();
+
+    private static double maxSpeedX = TunerConstants.MaxSpeed;
+
+    private Trigger netAligned;
 
     public RobotContainer() {
+        autoSelecter.addOption("Left 3", "Left 3");
+        autoSelecter.addOption("Center-L High-Net-Net", "Center-L High-Net-Net");
+
+        SmartDashboard.putData("AUTO MODE", autoSelecter);
+
         configureBindings();
     }
 
     private void configureBindings() {
+
+        netAligned = new Trigger(() -> {
+            return alignedNet();
+        }).onTrue(Commands.runOnce(() -> {
+            setRobotMode(RobotMode.NET_ALIGNED);
+        })).onFalse(Commands.runOnce(() -> {
+            if (getRobotMode() == RobotMode.NET_ALIGNED) {
+                setRobotMode(RobotMode.NONE);
+            }
+        }));
+
         drivetrain.setDefaultCommand(
-                drivetrain
-                        .applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * TunerConstants.MaxSpeed) // Drive
-                                // forward
-                                // with
-                                // negative Y
-                                // (forward)
-                                .withVelocityY(-driverController.getLeftX() * TunerConstants.MaxSpeed) // Drive left
-                                                                                                       // with negative
-                                                                                                       // X (left)
-                                .withRotationalRate(-driverController.getRightX() * TunerConstants.MaxAngularRate) // Drive
-                                                                                                                   // counterclockwise
-                        // with
-                        // negative X (left)
-                        ));
+                // maxSpeedX
+                getDrivingCommand());
 
         // -------------------------------------------------------------------------
         // Drive & align bindings
@@ -129,15 +153,24 @@ public class RobotContainer {
 
         // Bump up elevator
         operatorController.back().onTrue(elevator.setTargetHeightCommand(() -> {
-            return elevator.getTargetHeight() + 2.5;
+            return elevator.getTargetHeight() + 1.5;
         }));
 
         operatorController.rightStick().onTrue(elevator.setTargetHeightCommand(() -> {
             return elevator.getTargetHeight() - 1.5;
         }));
 
-        driverController.rightStick().onTrue(outtake.setFeed(-0.2)).onFalse(outtake.setFeed(0.0));
-        driverController.leftStick().onTrue(outtake.setFeed(0.28)).onFalse(outtake.setFeed(0.0));
+        /*
+         * driverController.rightStick().onTrue(Commands.runOnce(() ->
+         * {drivetrain.setDefaultCommand(
+         * // maxSpeedX
+         * getAlgaeDriveCommand());}, drivetrain)).onFalse(Commands.runOnce(() ->
+         * {drivetrain.setDefaultCommand(
+         * // maxSpeedX
+         * getDrivingCommand());}, drivetrain));
+         */
+        driverController.leftStick().onTrue(outtake.setFeed(-0.2).andThen(outtake.setStar(0.45))).onFalse(outtake.setFeed(0.0).andThen(outtake.setStar(0.0)));
+        // driverController.leftStick().onTrue(outtake.setFeed(0.28)).onFalse(outtake.setFeed(0.0));
 
         driverController.leftBumper()
                 .whileTrue(Commands.run(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0.45, 0))))
@@ -147,10 +180,10 @@ public class RobotContainer {
                 .onFalse(new InstantCommand(() -> drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0))));
 
         driverController.leftTrigger().whileTrue(new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
-                new ChassisSpeeds(0.95, 1.0, 1.85), new Translation3d(0.015, 0.015, 0.01)));
+                new ChassisSpeeds(0.95+0.5, 1.0+0.5, 3.5), new Translation3d(0.015, 0.015, 0.01)));
 
         driverController.rightTrigger().whileTrue(new AlignReef(align, AlignRequestType.RIGHT_REEF_ALIGN,
-                new ChassisSpeeds(0.85, 0.85, 1.5), new Translation3d(0.015, 0.015, 0.01)));
+                new ChassisSpeeds(0.85+0.5, 0.85+0.5, 3.5), new Translation3d(0.015, 0.015, 0.01)));
 
         driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
@@ -158,13 +191,14 @@ public class RobotContainer {
         // Elevator bindings
         // -------------------------------------------------------------------------
 
-        operatorController.x().onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0));
+        operatorController.x()
+                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0.5));
         operatorController.y()
                 .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder + 0));
         operatorController.b()
                 .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level2Encoder + 0));
         operatorController.a()
-                .onTrue(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
+                .onTrue(elevator.setTargetHeightCommand(0.15));
 
         // Zero encoder
         operatorController.start().onTrue(elevator.getEncoderResetCommand());
@@ -178,7 +212,7 @@ public class RobotContainer {
         // -------------------------------------------------------------------------
         // Outtake bindings
         // -------------------------------------------------------------------------
-        driverController.x().onTrue(outtake.setFeed(0.44)).onFalse(outtake.setFeed(0));
+        driverController.x().onTrue(outtake.setFeed(0.44).andThen(outtake.setStar(-0.45))).onFalse(outtake.setFeed(0).andThen(outtake.setStar(0.0)));
 
         // -------------------------------------------------------------------------
         // Algae bindings
@@ -201,7 +235,11 @@ public class RobotContainer {
         driverController.y().onTrue(getAlgaeHighCommand());
 
         operatorController.rightTrigger().onTrue(getAlgaeIntakeFloorCommand());
-        operatorController.leftTrigger().onTrue(getAlgaeScoreBargeInitial()).onFalse(getAlgaeScoreBargeFinal());
+        operatorController.leftTrigger().onTrue(getAlgaeScoreNetInitial())
+                .onFalse(Commands.runOnce(() -> {
+                    addRumble(0, 0.5, 0.5, RumbleType.kBothRumble);
+                }).andThen(getAlgaeScoreNetFinal()).andThen(new WaitCommand(0.3)));
+        // .andThen(getClampSpeedXCommand(TunerConstants.MaxSpeed))
 
         // -------------------------------------------------------------------------
         // DRIVE LOGGING & TUNING
@@ -220,13 +258,18 @@ public class RobotContainer {
         // -------------------------------------------------------------------------
 
         climbController.leftTrigger(0.2).whileTrue(climber.setClimberArmSpeed(
-            climbController::getLeftTriggerAxis))
-                .onFalse(climber.setClimberArmSpeed(0));
-        climbController.rightTrigger(0.2).whileTrue(climber.setClimberSpeedValue(
-            -1*climbController.getRightTriggerAxis()
-        )).onFalse(climber.setClimberArmSpeed(0));
+                climbController::getLeftTriggerAxis))
+                .onFalse(climber.setClimberSpeedValue(0));
+        /*
+         * climbController.rightTrigger(0.2).whileTrue(climber.setClimberSpeedValue(
+         * -1*climbController.getRightTriggerAxis()
+         * )).onFalse(climber.setClimberArmSpeed(0));
+         */
 
-        climbController.rightBumper().onTrue(climber.setClimberSpeedValue(-0.35)).onFalse(climber.setClimberSpeedValue(0));
+        climbController.rightTrigger().onTrue(climber.setClimberSpeedValue(-1))
+                .onFalse(climber.setClimberSpeedValue(0));
+
+        climbController.back().and(climbController.a()).onTrue(autoLookup.getTestAuto());
 
     }
 
@@ -324,16 +367,20 @@ public class RobotContainer {
         return robotMode;
     }
 
-    public static double[] getBestAlignCameraTarget() {
-        return vision.getBestAlignCameraTarget();
-    }
+    /*
+     * public static double[] getBestAlignCameraTarget() {
+     * return vision.getBestAlignCameraTarget();
+     * }
+     */
 
     public static Command getIntakeCommand() {
         return new SequentialCommandGroup(
                 // elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder),
-                outtake.feedOuttake(0.45),
+                elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder),
+                outtake.setStar(-0.5),
+                outtake.feedOuttake(0.425),
                 Commands.waitUntil(outtake.detectsCoralSupplier()),
-                outtake.feedOuttake(0.08),
+                outtake.feedOuttake(0.10),
                 Commands.waitUntil(() -> {
                     return !outtake.detectsCoralSupplier().getAsBoolean();
                 }),
@@ -342,20 +389,25 @@ public class RobotContainer {
                         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 0.65));
                     }
                 }),
-                outtake.feedOuttake(-0.23),
-                new WaitCommand(0.0967),
-                outtake.feedOuttake(0.0));
+                elevator.setTargetHeightCommand(0.2),
+                outtake.setStar(0.0),
+                outtake.feedOuttake(-0.3),
+                new WaitCommand(0.0987),
+                outtake.feedOuttake(0.0)
+                );
     }
 
     public static Command getAutoIntakeCommand() {
         return new SequentialCommandGroup(
                 // elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder),
-                outtake.feedOuttake(0.45),
+                outtake.setStar(-0.65),
+                outtake.feedOuttake(0.775),
                 Commands.waitUntil(outtake.detectsCoralSupplier()),
-                outtake.feedOuttake(0.08),
+                outtake.feedOuttake(0.10),
                 Commands.waitUntil(() -> {
                     return !outtake.detectsCoralSupplier().getAsBoolean();
                 }).withTimeout(1.2),
+                outtake.setStar(0.0),
                 new InstantCommand(() -> {
                     if (!RobotContainer.hasAlert(AlertMode.ACQUIRED_CORAL)) {
                         RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_CORAL, 0.25));
@@ -365,41 +417,46 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
 
-        return new SequentialCommandGroup(
+        return new WaitCommand(0.01).andThen(new SequentialCommandGroup(
                 elevator.getEncoderResetCommand(),
-                drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
+                // drivetrain.runOnce(() -> drivetrain.seedFieldCentric()),
 
                 // Set pose, better and more reliable than vision for now in case of miss
-                drivetrain.runOnce(() -> {
-                    if (isRed())
-                        drivetrain.resetPose(new Pose2d(10.321, 1.915, new Rotation2d(Units.degreesToRadians(180))));
-                    else
-                        /*
-                         * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
-                         * new Rotation2d(Units.degreesToRadians(0))));
-                         */
-                        drivetrain.resetPose(new Pose2d(7.229, 5.416, new Rotation2d(Units.degreesToRadians(0))));
-                }),
-                //autoLookup.getAuto(autoTable.getEntry("autoMode").getString("Nothing")));
-                autoLookup.getAuto("Left 3 Piece"));
+                // autoLookup.getAuto(autoTable.getEntry("autoMode").getString("Nothing")));
+                autoLookup.getAuto(autoSelecter.getSelected())
+
+        ));
 
         // return new PathPlannerAuto("FarAuto");
     }
 
     public static Command getScoreSequenceL4Command() {
         return elevator
-                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0).andThen(() -> {
+                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0.8).andThen(() -> {
                     drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0));
                 })
                 .andThen(Commands.waitUntil(() -> {
-                    return elevator.getPositionError() < 2.9;
-                }).withTimeout(2)).andThen(new WaitCommand(0.25).andThen(outtake.feedOuttake(0.25)))
-                .andThen(new WaitCommand(0.22)).andThen(elevator
+                    return elevator.getPositionError() < 3.8;
+                }).withTimeout(2)).andThen(new WaitCommand(0.0).andThen(outtake.feedOuttake(0.375)))
+                .andThen(new WaitCommand(0.125)).andThen(elevator
                         .setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                 .andThen(outtake.feedOuttake(0))
+                .andThen(new WaitCommand(0.0))
                 .andThen(() -> {
-                    drivetrain.driveRobotRelative(new ChassisSpeeds(-0.4, 0, 0));
+                    // drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0));
+                });
+    }
+
+    public static Command getScoreSequenceL4CommandFIRST() {
+        return elevator
+                .setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder).andThen(() -> {
                 })
+                .andThen(Commands.waitUntil(() -> {
+                    return elevator.getPositionError() < 2.7;
+                }).withTimeout(2)).andThen(new WaitCommand(0.15).andThen(outtake.feedOuttake(0.325)))
+                .andThen(new WaitCommand(0.25)).andThen(elevator
+                        .setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
+                .andThen(outtake.feedOuttake(0))
                 .andThen(new WaitCommand(0.0))
                 .andThen(() -> {
                     // drivetrain.driveRobotRelative(new ChassisSpeeds(0, 0, 0));
@@ -415,21 +472,22 @@ public class RobotContainer {
                 .andThen(new WaitCommand(0.75));
     }
 
-    public static Command getAlgaeScoreBargeInitial() {
-        return algae.setTargetAngleDegrees(68.5)
-                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 0));
+    public static Command getAlgaeScoreNetInitial() {
+        return algae.setTargetAngleDegrees(71.25)
+                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.level4Encoder + 2));
+        // .andThen(getClampSpeedXCommand(1.75))
     }
 
-    public static Command getAlgaeScoreBargeFinal() {
+    public static Command getAlgaeScoreNetFinal() {
         return (algae.setAlgaeGrabberSpeedCommand(-0.75)).andThen(Commands.waitSeconds(0.07))
                 .andThen(algae.setAlgaeGrabberSpeedCommand(1, 1)).andThen(Commands.waitSeconds(0.45))
                 .andThen(algae.setTargetAngleDegrees(85)).andThen(algae.setAlgaeGrabberSpeedCommand(0))
-                .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder));
+                .andThen(elevator.setTargetHeightCommand(0.2));
     }
 
     public static Command getAlgaeIntakeFloorCommand() {
         return new SequentialCommandGroup(
-                algae.setTargetAngleDegrees(-15.5)
+                algae.setTargetAngleDegrees(-20.5)
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder))
                         .andThen(algae.setAlgaeGrabberSpeedCommand(-0.8))
                         .andThen(Commands.waitUntil(algae.getHasAlgaeSupplier()))
@@ -437,7 +495,7 @@ public class RobotContainer {
                             RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 0.75));
                         })
                         .andThen(algae.setAlgaeGrabberSpeedCommand(0))
-                        .andThen(algae.setTargetAngleDegrees(40))
+                        .andThen(algae.setTargetAngleDegrees(65))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }
 
@@ -451,7 +509,7 @@ public class RobotContainer {
                             RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 0.75));
                         })
                         .andThen(algae.setAlgaeGrabberSpeedCommand(0))
-                        .andThen(algae.setTargetAngleDegrees(40))
+                        .andThen(algae.setTargetAngleDegrees(70))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }
 
@@ -464,11 +522,33 @@ public class RobotContainer {
                         .andThen(() -> {
                             RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 0.75));
                         })
+                        .andThen(algae.setAlgaeGrabberSpeedCommand(-0.2))
+                        .andThen(new WaitCommand(0.5))
                         .andThen(algae.setAlgaeGrabberSpeedCommand(0))
+                        .andThen(algae.setTargetAngleDegrees(80))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder - 15))
+                        .andThen(new WaitCommand(0.7))
+                        .andThen(elevator.setTargetHeightCommand(0.15)));
+    }
+
+    public static Command getAlgaeLowCommandAUTOFIRST() {
+        return new SequentialCommandGroup(
+                algae.setTargetAngleDegrees(-8)
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder))
+                        .andThen(algae.setAlgaeGrabberSpeedCommand(-0.8))
+                        .andThen(Commands.waitUntil(algae.getHasAlgaeSupplier()))
+                        .andThen(() -> {
+                            RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 0.75));
+                        }));
+    }
+
+    public static Command getAlgaeCommandAUTOSECOND() {
+        return new SequentialCommandGroup(
+                algae.setAlgaeGrabberSpeedCommand(0)
                         .andThen(new WaitCommand(0.5))
                         .andThen(algae.setTargetAngleDegrees(85))
-                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder - 8))
-                        .andThen(new WaitCommand(0.85))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.lowAlgaeEncoder - 15))
+                        .andThen(new WaitCommand(0.7))
                         .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
     }
 
@@ -481,11 +561,115 @@ public class RobotContainer {
                         .andThen(() -> {
                             RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 0.75));
                         })
-                        .andThen(algae.setAlgaeGrabberSpeedCommand(0))
+                        .andThen(algae.setAlgaeGrabberSpeedCommand(-0.2))
                         .andThen(new WaitCommand(0.5))
-                        .andThen(algae.setTargetAngleDegrees(85))
-                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.highAlgaeEncoder - 8))
-                        .andThen(new WaitCommand(0.85))
-                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.loadingStationEncoder)));
+                        .andThen(algae.setAlgaeGrabberSpeedCommand(0))
+                        .andThen(algae.setTargetAngleDegrees(75))
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.highAlgaeEncoder - 15))
+                        .andThen(new WaitCommand(0.7))
+                        .andThen(elevator.setTargetHeightCommand(0.15)));
+    }
+
+    public static Command getAlgaeHighCommandALGAEFIRST() {
+        return new SequentialCommandGroup(
+                algae.setTargetAngleDegrees(-3)
+                        .andThen(elevator.setTargetHeightCommand(Constants.ElevatorConstants.highAlgaeEncoder))
+                        .andThen(algae.setAlgaeGrabberSpeedCommand(-0.8))
+                        .andThen(Commands.waitUntil(algae.getHasAlgaeSupplier()))
+                        .andThen(() -> {
+                            RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 0.75));
+                        }));
+    }
+
+    /*
+     * private static Command getClampSpeedXCommand(double value) {
+     * return Commands.runOnce(() -> {
+     * maxSpeedX = value;
+     * });
+     * }
+     */
+
+    public static boolean alignedNet() {
+        Pose2d pose = drivetrain.getState().Pose;
+
+        double xSpeed = drivetrain.getState().Speeds.vxMetersPerSecond;
+        double ySpeed = drivetrain.getState().Speeds.vyMetersPerSecond;
+
+        if (Math.abs(ySpeed) > 4.0) {
+            // return false;
+        }
+
+        return (pose.getX() + (xSpeed * 0.375)) > 7.15 && (pose.getX() + (xSpeed * -0.375)) < 10.45;
+    }
+
+    public static boolean alignAlgae() {
+        return driverController.rightStick().getAsBoolean();
+    }
+
+    public static double getAlgaeYaw() {
+        if(!vision.seesAlgae()) {
+            setRobotMode(RobotMode.SEES_NO_ALGAE);
+        }
+
+        try {
+            if(vision.seesAlgae()) {
+            return vision.getAlgaeYaw()/-9.0;
+            } else {
+                return driverController.getRightX();
+            }
+        } catch (Exception e) {
+            return driverController.getRightX();
+        }
+    }
+
+    private Command getDrivingCommand() {
+
+        return drivetrain
+                .applyRequest(driveSupplier()
+                // Drive
+                // counterclockwise
+                // with
+                // negative X (left)
+                );
+    }
+
+    public Supplier<SwerveRequest> driveSupplier() {
+        return () -> {
+            if (alignAlgae()) {
+                return algaeDrive
+                        .withVelocityX(Math.sqrt(
+                                Math.pow(driverController.getLeftX(), 2) + Math.pow(driverController.getLeftY(), 2)) * TunerConstants.MaxSpeed) // Drive
+                        // forward
+                        // with
+                        // negative Y
+                        // (forward)
+                        .withVelocityY(0) // Drive
+                                          // left
+                                          // with
+                                          // negative
+                                          // X
+                                          // (left)
+                        .withRotationalRate(
+                            getAlgaeYaw());
+            } else {
+                if(getRobotMode() == RobotMode.SEES_ALGAE || getRobotMode() == RobotMode.SEES_NO_ALGAE) {
+                    setRobotMode(RobotMode.NONE);
+                }
+                return drive
+                        .withVelocityX(-driverController.getLeftY() * TunerConstants.MaxSpeed) // Drive
+                        // forward
+                        // with
+                        // negative Y
+                        // (forward)
+                        .withVelocityY(-driverController.getLeftX() * TunerConstants.MaxSpeed) // Drive
+                                                                                               // left
+                                                                                               // with
+                                                                                               // negative
+                                                                                               // X
+                                                                                               // (left)
+                        .withRotationalRate(
+                                -driverController.getRightX() * TunerConstants.MaxAngularRate);
+            }
+        };
     }
 }

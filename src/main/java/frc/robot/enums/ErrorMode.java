@@ -8,4 +8,5 @@ public enum ErrorMode {
     ELEVATOR_REQUIRES_ZERO,
     NO_LIMELIGHT,
     NO_ORANGE_PI,
+    NO_LASER_CAN
 }

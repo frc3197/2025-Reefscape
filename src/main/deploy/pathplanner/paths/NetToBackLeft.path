@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.855020491803279,
-        "y": 5.583401639344262
+        "x": 7.1566598360655735,
+        "y": 5.127868852459017
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.9240314312270566,
-        "y": 6.555589084463827
+        "x": 6.4254098360655725,
+        "y": 5.463524590163935
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 1.4722500000000003,
-        "y": 7.48625
+        "x": 5.11875,
+        "y": 5.127868852459017
       },
       "prevControl": {
-        "x": 2.401149144970417,
-        "y": 6.885815576517341
+        "x": 5.598258196721312,
+        "y": 5.775204918032787
       },
       "nextControl": null,
       "isLocked": false,
@@ -33,22 +33,22 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 5.5,
-    "maxAcceleration": 6.0,
+    "maxVelocity": 3.0,
+    "maxAcceleration": 2.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0.25,
-    "rotation": -52.0012675574953
+    "velocity": 0,
+    "rotation": -119.35775354279133
   },
   "reversed": false,
-  "folder": "FarAuto",
+  "folder": "CenterAutos",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 60.01836063115072
+    "rotation": 178.88760038370216
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }

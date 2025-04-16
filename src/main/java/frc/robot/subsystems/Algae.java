@@ -21,6 +21,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,7 +30,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.enums.AlertMode;
+import frc.robot.enums.ErrorMode;
 import frc.robot.util.AlertBody;
+import frc.robot.util.ErrorBody;
+
 
 @SuppressWarnings("unused")
 public class Algae extends SubsystemBase {
@@ -140,8 +144,16 @@ public class Algae extends SubsystemBase {
 
   public BooleanSupplier hasAlgae() {
     return (() -> {
-      return algaeLaserCan.getMeasurement().status == 0 && algaeLaserCan.getMeasurement().distance_mm < Constants.AlgaeConstants.algaeSensorDistance
-          && algaeLaserCan.getMeasurement().distance_mm >= 1;
+      try {
+        return algaeLaserCan.getMeasurement().distance_mm < Constants.AlgaeConstants.algaeSensorDistance
+            && algaeLaserCan.getMeasurement().distance_mm >= 1;
+      } catch (Exception e) {
+        DriverStation.reportError("ALGAE LASER CAN HAS LOST CAN OR POWER", false);
+        if(!RobotContainer.hasError(ErrorMode.NO_LASER_CAN)) {
+          RobotContainer.addError(new ErrorBody(ErrorMode.NO_LASER_CAN, this::laserCanFound));
+        }
+        return false;
+      }
     });
   }
 
@@ -150,19 +162,20 @@ public class Algae extends SubsystemBase {
 
     SmartDashboard.putNumber("Algae Arm Encoder", algaeEncoder.get());
     SmartDashboard.putNumber("Algae Arm Angle", convertTicksToDegrees(algaeEncoder.get()));
-    //SmartDashboard.putNumber("Algae Laser Can", algaeLaserCan.getMeasurement().distance_mm);
+    // SmartDashboard.putNumber("Algae Laser Can",
+    // algaeLaserCan.getMeasurement().distance_mm);
 
     updateAlgaeStatus();
 
     if (!RobotContainer.getTestMode()) {
-     // updateClosedLoop();
+      updateClosedLoop();
     } else {
       deployMotor.set(0);
     }
 
     // 0.41
 
-    //deployMotor.setVoltage(0.42);
+    // deployMotor.setVoltage(0.42);
 
   }
 
@@ -174,7 +187,7 @@ public class Algae extends SubsystemBase {
       RobotContainer.setHasAlgae(hasAlgae().getAsBoolean());
 
       if (hasAlgae().getAsBoolean()) {
-        //RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
+        // RobotContainer.addAlert(new AlertBody(AlertMode.ACQUIRED_ALGAE, 1.25));
       }
     }
 
@@ -182,8 +195,10 @@ public class Algae extends SubsystemBase {
 
   // Returns arm angle in degrees from encoder ticks
   public double convertTicksToDegrees(double ticks) {
-    return 90 - ( (ticks - Constants.AlgaeConstants.algaeUpEncoder) * 90.0 / (Constants.AlgaeConstants.algaeDownEncoder - Constants.AlgaeConstants.algaeUpEncoder)); 
-    //return ((Constants.AlgaeConstants.algaeDownEncoder - ticks) / Constants.AlgaeConstants.algaeUpEncoder) * (90);
+    return 90 - ((ticks - Constants.AlgaeConstants.algaeUpEncoder) * 90.0
+        / (Constants.AlgaeConstants.algaeDownEncoder - Constants.AlgaeConstants.algaeUpEncoder));
+    // return ((Constants.AlgaeConstants.algaeDownEncoder - ticks) /
+    // Constants.AlgaeConstants.algaeUpEncoder) * (90);
   }
 
   private void updateClosedLoop() {
@@ -204,11 +219,21 @@ public class Algae extends SubsystemBase {
       pidSpeed = algaeArmPID.calculate(targetAlgaeAngle - algaeEncoder.get());
     } else {
       feedForwardSpeed = emptyArmFeedForward.calculate(armAngleRadians, -radianVelocity);
-      pidSpeed = -emptyArmPID.calculate((targetAlgaeAngle - convertTicksToDegrees(algaeEncoder.get()))/10);
+      pidSpeed = -emptyArmPID.calculate((targetAlgaeAngle - convertTicksToDegrees(algaeEncoder.get())) / 10);
     }
 
     double combinedSpeed = MathUtil.clamp(pidSpeed, -0.4, 0.4);
     deployMotor.set(combinedSpeed + feedForwardSpeed);
   }
 
+  private boolean laserCanFound() {
+    // SmartDashboard.putNumber("Timestamp", getLimelightTime(bestPose));
+    // SmartDashboard.putNumber("Limelight dist", bestPose.avgTagDist);
+
+    try {
+      return  algaeLaserCan.getMeasurement().distance_mm < 100000000;
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }

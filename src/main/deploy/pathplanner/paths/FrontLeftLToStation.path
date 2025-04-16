@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.3855532786885245,
-        "y": 6.530430327868853
+        "x": 2.3985641309389063,
+        "y": 6.213865744937584
       },
       "isLocked": false,
       "linkedName": null
@@ -20,8 +20,8 @@
         "y": 7.153790983606557
       },
       "prevControl": {
-        "x": 2.289651639344263,
-        "y": 6.554405737704918
+        "x": 1.9235504010457865,
+        "y": 6.613813981734045
       },
       "nextControl": null,
       "isLocked": false,
@@ -34,7 +34,7 @@
   "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.5,
-    "maxAcceleration": 4.0,
+    "maxAcceleration": 6.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0.3,
-    "rotation": -45.00000000000004
+    "rotation": -53.72145978918002
   },
   "reversed": false,
   "folder": "FarAuto",

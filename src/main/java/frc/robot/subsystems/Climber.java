@@ -11,9 +11,12 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
+import frc.robot.enums.RobotMode;
 
 
 public class Climber extends SubsystemBase {
@@ -36,22 +39,14 @@ public class Climber extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-  }
-
-  public Command setClimberArmSpeed(double speed) {
-    return Commands.runOnce(() -> {
-
-      if(speed < 0) {
-        climberArm.set(speed);
-        return;
-      } else {
-        if (!(limit.get() && speed > 0)) {
-          climberArm.set(0);
-        } else {
-          climberArm.set(speed);
-        }
+    SmartDashboard.putBoolean("LIMIT CLIMB", !limit.get());
+    if(!limit.get() && RobotContainer.getRobotMode() != RobotMode.FULLY_CLIMBED) {
+      RobotContainer.setRobotMode(RobotMode.FULLY_CLIMBED);
+    } else {
+      if(limit.get() && RobotContainer.getRobotMode() == RobotMode.FULLY_CLIMBED && !RobotContainer.getEnabled()) {
+        RobotContainer.setRobotMode(RobotMode.NONE);
       }
-    });
+    }
   }
 
   public Command setClimberSpeedValue(double speed) {
@@ -61,11 +56,11 @@ public class Climber extends SubsystemBase {
   }
   
   public Command setClimberArmSpeed(Supplier<Double> speed) {
-    return Commands.runOnce(() -> {
+    return Commands.run(() -> {
       if(speed.get() < 0) {
         climberArm.set(speed.get());
       } else {
-        if (!(limit.get() && speed.get() > 0)) {
+        if (!limit.get()) {
           climberArm.set(0);
         } else {
           climberArm.set(speed.get());

@@ -185,8 +185,13 @@ public class Elevator extends SubsystemBase {
     SmartDashboard.putNumber("Elevator FINAL", finalSpeed);
 
     finalSpeed = MathUtil.applyDeadband(finalSpeed, 0.02);
-    
-    leftMotor.set(finalSpeed);
-    rightMotor.set(finalSpeed);
+
+    if(targetHeightTicks < 0.25 && readEncoder() < 0.25) {
+      leftMotor.set(0);
+      rightMotor.set(0);
+    } else {
+      leftMotor.set(finalSpeed);
+      rightMotor.set(finalSpeed);
+    }
   }
 }

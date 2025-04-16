@@ -16,7 +16,9 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -205,8 +207,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 // feedforwards
                 new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
                                                 // holonomic drive trains
-                        new PIDConstants(1, 0.0, 0.0), // Translation PID constants
-                        new PIDConstants(1, 0.0, 0.0) // Rotation PID constants
+                        new PIDConstants(1.5, 0.0, 0.0), // Translation PID constants
+                        new PIDConstants(0.8, 0.0, 0.0) // Rotation PID constants
 
                 ),
                 config, // The robot configuration
@@ -224,6 +226,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 },
                 this // Reference to this subsystem to set requirements
         );
+
+        FollowPathCommand.warmupCommand().schedule();
+        PathfindingCommand.warmupCommand().schedule();
 
     }
 

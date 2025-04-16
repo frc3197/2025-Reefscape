@@ -8,6 +8,8 @@ import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -16,14 +18,19 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.enums.ErrorMode;
+import frc.robot.RobotContainer;
 import frc.robot.Constants;
+import frc.robot.util.ErrorBody;
 
 @SuppressWarnings("unused")
 public class Outtake extends SubsystemBase {
 
-  private LaserCan outtakeLaserCan;
+  private final LaserCan outtakeLaserCan;
   private final TalonFX outtakeMotor;
   private final BooleanSupplier detectsCoral;
+
+  private final SparkMax starMotor;
 
   public Outtake() {
 
@@ -34,15 +41,25 @@ public class Outtake extends SubsystemBase {
     outtakeMotor.setNeutralMode(NeutralModeValue.Brake);
 
     detectsCoral = () -> {
-      return outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange;
+      try {
+        return  outtakeLaserCan.getMeasurement().distance_mm < Constants.OuttakeConstants.sensorRange;
+      } catch (Exception e) {
+        DriverStation.reportError("CORAL LASER CAN HAS LOST CAN OR POWER", false);
+        if(!RobotContainer.hasError(ErrorMode.NO_LASER_CAN)) {
+          RobotContainer.addError(new ErrorBody(ErrorMode.NO_LASER_CAN, this::laserCanFound));
+        }
+        return false;
+      }
     };
+
+    starMotor = new SparkMax(Constants.IntakeConstants.starMotorId, MotorType.kBrushless);
 
   }
 
   @Override
   public void periodic() {
 
-    SmartDashboard.putNumber("Sensor", outtakeLaserCan.getMeasurement().distance_mm);
+    //SmartDashboard.putNumber("Sensor", outtakeLaserCan.getMeasurement().distance_mm);
 
     SmartDashboard.putBoolean("Has coral", detectsCoral.getAsBoolean());
 
@@ -57,7 +74,7 @@ public class Outtake extends SubsystemBase {
   public Command stopMotors() {
     return Commands.runOnce(() -> {
       feedOuttake(0);
-    });
+    }, this);
   }
 
   public Command feedOuttake(double speed) {
@@ -66,15 +83,23 @@ public class Outtake extends SubsystemBase {
     }, this);
   }
 
-  public Command spitOuttake() {
-    return Commands.runOnce(() -> {
-      outtakeMotor.set(Constants.OuttakeConstants.outtakeSpitSpeed);
-    }, this).andThen(new WaitCommand(1)).andThen(() -> outtakeMotor.set(0)).withName("Spit Outtake");
-  }
-
   public Command setFeed(double value) {
     return Commands.runOnce(() -> {
       outtakeMotor.set(value);
+    }, this);
+  }
+
+  public Command setStar(double value) {
+    return Commands.runOnce(() -> {
+      starMotor.set(value);
     });
+  }
+
+  private boolean laserCanFound() {
+    try {
+      return  outtakeLaserCan.getMeasurement().distance_mm < 100000000;
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

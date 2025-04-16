@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonUtils;
 import org.photonvision.PhotonPoseEstimator;
@@ -18,17 +20,22 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Unit;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.enums.RobotMode;
+import frc.robot.enums.ErrorMode;
+import frc.robot.util.ErrorBody;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 
@@ -55,8 +62,9 @@ public class Vision extends SubsystemBase {
   private final AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   // Reef & algae align camera
-  private final PhotonCamera alignCamera;
+  // private final PhotonCamera alignCamera;
   private final PhotonCamera intakeCamera;
+  private final PhotonCamera algaeCamera;
 
   // Drive subsystem
   private CommandSwerveDrivetrain drive;
@@ -67,6 +75,7 @@ public class Vision extends SubsystemBase {
     this.leftCamera = new PhotonCamera("camera-left");
     this.rightCamera = new PhotonCamera("camera-right");
     this.intakeCamera = new PhotonCamera("intake-camera");
+    this.algaeCamera = new PhotonCamera("algae-camera");
     this.backEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
         robotToBack);
     this.leftEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
@@ -74,46 +83,109 @@ public class Vision extends SubsystemBase {
     this.rightEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
         robotToRight);
 
-    this.alignCamera = new PhotonCamera("camera-align");
+    // this.alignCamera = new PhotonCamera("camera-align");
   }
 
   @Override
   public void periodic() {
 
-    LimelightHelpers.SetRobotOrientation("", drive.getState().Pose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
+    SmartDashboard.putBoolean("Aligned Net", RobotContainer.alignedNet());
+
+    if (RobotContainer.getEnabled()) {
+      LimelightHelpers.SetRobotOrientation("", drive.getState().Pose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
+    } else {
+      LimelightHelpers.SetRobotOrientation("", 45, 0, 0, 0, 0, 0);
+    }
 
     PoseEstimate bestPose = getDesiredPose();
 
-    //SmartDashboard.putNumber("Timestamp", getLimelightTime(bestPose));
-    SmartDashboard.putNumber("Limelight dist", bestPose.avgTagDist);
+    SmartDashboard.putBoolean("HAS VISION", true);
 
-    if (bestPose.avgTagDist != 0.0) {
-      SmartDashboard.putBoolean("HAS VISION", true);
-      drive.addVisionMeasurement(bestPose.pose, getLimelightTime(bestPose),
-          VecBuilder.fill(0.05, 0.05, Double.POSITIVE_INFINITY));
+    // SmartDashboard.putNumber("Timestamp", getLimelightTime(bestPose));
+    // SmartDashboard.putNumber("Limelight dist", bestPose.avgTagDist);
 
-      double[] newVision = { bestPose.pose.getX(), bestPose.pose.getY(),
-          bestPose.pose.getRotation().getDegrees() };
-      SmartDashboard.putNumberArray("LIMELIGHT VISION", newVision);
-    } else {
-      SmartDashboard.putBoolean("HAS VISION", false);
+    try {
+      if (bestPose.avgTagDist <= 10 && bestPose.avgTagDist > 0.1) {
+        SmartDashboard.putBoolean("HAS VISION", true);
+
+        if (RobotContainer.getEnabled()) {
+
+          drive.addVisionMeasurement(bestPose.pose, getLimelightTime(bestPose),
+              VecBuilder.fill(0.0035, 0.0035, Double.POSITIVE_INFINITY));
+        } else {
+
+          drive.addVisionMeasurement(bestPose.pose, Utils.getCurrentTimeSeconds(),
+              VecBuilder.fill(0.0035, 0.0035, Double.POSITIVE_INFINITY));
+        }
+
+        double[] newVision = { bestPose.pose.getX(), bestPose.pose.getY(),
+            bestPose.pose.getRotation().getDegrees() };
+        SmartDashboard.putNumberArray("LIMELIGHT VISION", newVision);
+      } else {
+        SmartDashboard.putBoolean("HAS VISION", false);
+      }
+    } catch (Exception e) {
+      DriverStation.reportError("No limelight", true);
+      if (!RobotContainer.hasError(ErrorMode.NO_LIMELIGHT))
+        RobotContainer.addError(new ErrorBody(ErrorMode.NO_LIMELIGHT, this::limelightFound));
     }
 
     pollPhotonCameras();
 
-    checkIntakeCamera();
+    if (DriverStation.isAutonomous())
+      checkIntakeCamera();
 
-    SmartDashboard.putString("Auto mode", NetworkTableInstance.getDefault().getTable("Auto").getEntry("autoMode").getString("Nothing"));
+    SmartDashboard.putString("Auto mode",
+        NetworkTableInstance.getDefault().getTable("Auto").getEntry("autoMode").getString("Nothing"));
+  }
+
+  public double getAlgaeYaw() {
+    var result = algaeCamera.getLatestResult();
+    if (result.hasTargets()) {
+      SmartDashboard.putBoolean("Algae DETECTED NEW", true);
+      var bestTarget = result.getBestTarget();
+      SmartDashboard.putNumber("Algae YAW", bestTarget.getYaw());
+      RobotContainer.addRumble(0, 0.25, 0.15, RumbleType.kRightRumble);
+      RobotContainer.setRobotMode(RobotMode.SEES_ALGAE);
+      return bestTarget.getYaw();
+    }
+    System.out.println("NO ALGAE");
+    return 0.0;
+  }
+
+  public boolean seesAlgae() {
+    var result = algaeCamera.getLatestResult();
+    if (result.hasTargets()) {
+      return true;
+    }
+    return false;
   }
 
   // Returns the best vision pose, for updating pose estimator
   private PoseEstimate getDesiredPose() {
     return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("");
-    //return LimelightHelpers.getBotPose3d_wpiBlue("");
+    // return LimelightHelpers.getBotPose3d_wpiBlue("");
+  }
+
+  private boolean limelightFound() {
+    PoseEstimate bestPose = getDesiredPose();
+
+    // SmartDashboard.putNumber("Timestamp", getLimelightTime(bestPose));
+    // SmartDashboard.putNumber("Limelight dist", bestPose.avgTagDist);
+
+    try {
+      if (bestPose.avgTagDist != 100000000.0) {
+        return true;
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   // Returns time, needs to be fixed
   private double getLimelightTime(PoseEstimate poseTime) {
+    SmartDashboard.putNumber("LIMELIGHT TIME NEW", poseTime.timestampSeconds);
     return poseTime.timestampSeconds;
 
     /*
@@ -147,11 +219,13 @@ public class Vision extends SubsystemBase {
       double[] newVision = { robotPose.toPose2d().getX(), robotPose.toPose2d().getY(),
           robotPose.toPose2d().getRotation().getDegrees() };
 
-      SmartDashboard.putNumberArray("LEFT CAMERA VISION", newVision);
       SmartDashboard.putNumber("LEFT CAMERA LATENCY", Timer.getTimestamp() - leftResult.getTimestampSeconds());
 
       double distance = Math.sqrt(
           Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2));
+
+      if (distance < 2 && target.getPoseAmbiguity() <= 0.2)
+        SmartDashboard.putNumberArray("LEFT CAMERA VISION", newVision);
 
       if (distance < 2 && target.getPoseAmbiguity() <= 0.2)
         drive.addVisionMeasurement(robotPose.toPose2d(),
@@ -174,11 +248,13 @@ public class Vision extends SubsystemBase {
       double[] newVision = { robotPose.toPose2d().getX(), robotPose.toPose2d().getY(),
           robotPose.toPose2d().getRotation().getDegrees() };
 
-      SmartDashboard.putNumberArray("RIGHT CAMERA VISION", newVision);
       SmartDashboard.putNumber("RIGHT CAMERA LATENCY", Timer.getTimestamp() - rightResult.getTimestampSeconds());
 
       double distance = Math.sqrt(
           Math.pow(robotOffset.getX(), 2) + Math.pow(robotOffset.getY(), 2) + Math.pow(robotOffset.getZ(), 2));
+
+      if (distance < 2 && target.getPoseAmbiguity() <= 0.2)
+        SmartDashboard.putNumberArray("RIGHT CAMERA VISION", newVision);
 
       if (distance < 2 && target.getPoseAmbiguity() <= 0.2)
         drive.addVisionMeasurement(robotPose.toPose2d(),
@@ -187,25 +263,30 @@ public class Vision extends SubsystemBase {
     }
   }
 
-  public double[] getBestAlignCameraTarget() {
-    var result = alignCamera.getLatestResult();
-    if (result.hasTargets()) {
-      var bestTarget = result.getBestTarget();
-      return new double[] { bestTarget.getYaw(), bestTarget.getPitch() };
-    }
-    return new double[] { 0, 0 };
-  }
+  /*
+   * public double[] getBestAlignCameraTarget() {
+   * var result = alignCamera.getLatestResult();
+   * if (result.hasTargets()) {
+   * var bestTarget = result.getBestTarget();
+   * return new double[] { bestTarget.getYaw(), bestTarget.getPitch() };
+   * }
+   * return new double[] { 0, 0 };
+   * }
+   */
 
   public void checkIntakeCamera() {
     var result = intakeCamera.getLatestResult();
     if (result.hasTargets()) {
+      SmartDashboard.putBoolean("CORAL DETECTED NEW", true);
       var bestTarget = result.getBestTarget();
       RobotContainer.setRobotMode(RobotMode.DETECTS_PIECE);
       return;
     }
     if (RobotContainer.getRobotMode() == RobotMode.DETECTS_PIECE) {
+      SmartDashboard.putBoolean("CORAL DETECTED NEW", false);
       RobotContainer.setRobotMode(RobotMode.NONE);
     }
+
   }
 
   public boolean detectsPiece() {

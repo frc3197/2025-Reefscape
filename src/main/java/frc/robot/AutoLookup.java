@@ -59,188 +59,229 @@ public class AutoLookup {
                 algae = algae1;
         }
 
-        public Command getAuto(String name) {
-                /*
-                 * 
-                 * 
-                 * return new SequentialCommandGroup(
-                 * Commands.run(() -> {
-                 * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
-                 * new Rotation2d(Units.degreesToRadians(0))));
-                 * }),
-                 * 
-                 * // Algae arm stow
-                 * algae.setTargetAngleDegrees(90),
-                 * 
-                 * // Move elevator up a bit to get ready
-                 * elevator.setTargetHeightCommand(Constants.ElevatorConstants.level3Encoder +
-                 * 1000),
-                 * new WaitCommand(1),
-                 * 
-                 * // Go to first piece, back left R
-                 * loadPath("NewAuto"),
-                 * 
-                 * new WaitCommand(1),
-                 * 
-                 * // Place first piece, back left R
-                 * RobotContainer.getScoreSequenceL4Command());
-                 */
+        public Command getLeftThreePiece() {
+                return new SequentialCommandGroup(
+                                drivetrain.runOnce(() -> {
+                                        if (RobotContainer.isRed())
+                                                drivetrain.resetPose(new Pose2d(10.481, 1.899,
+                                                                new Rotation2d(Units.degreesToRadians(
+                                                                                45))));
+                                        else
+                                                /*
+                                                 * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
+                                                 * new Rotation2d(Units.degreesToRadians(0))));
+                                                 */
+                                                drivetrain.resetPose(new Pose2d(7.049, 6.160,
+                                                                new Rotation2d(Units
+                                                                                .degreesToRadians(180 + 45))));
+                                }),
 
-                switch (name) {
-                        case "Left 3 Piece":
+                                // Algae arm stow
+                                algae.setTargetAngleDegrees(90),
 
-                                return new SequentialCommandGroup(
-                                                drivetrain.runOnce(() -> {
-                                                        if (RobotContainer.isRed())
-                                                                drivetrain.resetPose(new Pose2d(10.321, 1.915,
-                                                                                new Rotation2d(Units.degreesToRadians(
-                                                                                                180))));
-                                                        else
-                                                                /*
-                                                                 * drivetrain.resetNewPose(new Pose2d(7.300, 4.180,
-                                                                 * new Rotation2d(Units.degreesToRadians(0))));
-                                                                 */
-                                                                drivetrain.resetPose(new Pose2d(7.229, 5.416,
-                                                                                new Rotation2d(Units
-                                                                                                .degreesToRadians(0))));
-                                                }),
+                                // Move elevator up a bit to get ready
+                                elevator.setTargetHeightCommand(
+                                                Constants.ElevatorConstants.level3Encoder),
 
-                                                // Algae arm stow
-                                                algae.setTargetAngleDegrees(90),
+                                // Go to first piece, back left R
+                                loadPath("FarStartToBackLeftR"),
 
-                                                // Move elevator up a bit to get ready
-                                                elevator.setTargetHeightCommand(
-                                                                Constants.ElevatorConstants.level3Encoder + 000),
-
-                                                // Go to first piece, back left R
-                                                loadPath("FarStartToBackLeftR"),
-
-                                                // Place first piece, back left R
-                                                new ParallelCommandGroup(
-                                                                new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
-                                                                                new ChassisSpeeds(0.9, 0.725, 1.65),
-                                                                                new Translation3d(0.015, 0.015, 0.01),
-                                                                                3)
-                                                                                .withTimeout(0.8),
-                                                                RobotContainer.getScoreSequenceL4Command()),
-
-                                                // Start intaking for second piece but end process after driving & delay
-                                                loadPath("BackLeftRToStation"),
-
-                                                Commands.waitUntil(() -> {
-                                                        return vision.detectsPiece();
-                                                }).withTimeout(1.5),
-                                                new ParallelCommandGroup(
-                                                                new SequentialCommandGroup(
-                                                                                RobotContainer.getAutoIntakeCommand(),
-                                                                                outtake.feedOuttake(-0.2),
-                                                                                new WaitCommand(0.0667),
-                                                                                outtake.feedOuttake(0.0),
-                                                                                elevator.setTargetHeightCommand(
-                                                                                                Constants.ElevatorConstants.level4Encoder)),
-                                                                new SequentialCommandGroup(
-
-                                                                                // Go to second branch, front left L
-                                                                                loadPath("StationToFrontLeftL"),
-
-                                                                                new AlignReef(align,
-                                                                                                AlignRequestType.LEFT_REEF_ALIGN,
-                                                                                                new ChassisSpeeds(0.9,
-                                                                                                                0.725,
-                                                                                                                1.65),
-                                                                                                new Translation3d(0.015,
-                                                                                                                0.015,
-                                                                                                                0.01),
-                                                                                                2).withTimeout(0.6))),
-
-                                                outtake.stopMotors(),
-                                                // RobotContainer.getIntakeCommand(),
-                                                elevator.setTargetHeightCommand(
-                                                                Constants.ElevatorConstants.level4Encoder),
+                                // Place first piece, back left R
+                                new ParallelCommandGroup(
                                                 new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
-                                                                new ChassisSpeeds(0.9, 0.725, 1.65),
+                                                                new ChassisSpeeds(0.9 + 0.15, 0.725 + 0.15,
+                                                                                1.65 + 0.15),
                                                                 new Translation3d(0.015, 0.015, 0.01),
-                                                                2).withTimeout(0.6),
+                                                                3)
+                                                                .withTimeout(1.35)
+                                                                .raceWith(new WaitCommand(0.225).andThen(RobotContainer
+                                                                                .getScoreSequenceL4CommandFIRST()))),
 
-                                                // Place second piece
-                                                RobotContainer.getScoreSequenceL4Command(),
+                                // Start intaking for second piece but end process after driving & delay
 
-                                                // Start intaking for third piece but end process after driving & delay
-                                                loadPath("FrontLeftLToStation"),
+                                new ParallelCommandGroup(
+                                                new SequentialCommandGroup(
+                                                                RobotContainer.getAutoIntakeCommand().withTimeout(6.5),
+                                                                elevator.setTargetHeightCommand(
+                                                                                Constants.ElevatorConstants.level4Encoder
+                                                                                                + 0.8),
+                                                                outtake.feedOuttake(-0.235),
+                                                                new WaitCommand(0.0667),
+                                                                outtake.feedOuttake(0.0)),
+                                                new SequentialCommandGroup(
+                                                                loadPath("BackLeftRToStation"),
 
-                                                Commands.waitUntil(() -> {
-                                                        return vision.detectsPiece();
-                                                }).withTimeout(1.5),
-                                                new ParallelCommandGroup(
-                                                                new SequentialCommandGroup(
-                                                                                RobotContainer.getAutoIntakeCommand(),
-                                                                                elevator.setTargetHeightCommand(
-                                                                                                Constants.ElevatorConstants.level3Encoder
-                                                                                                                + 0000),
-                                                                                outtake.feedOuttake(-0.2),
-                                                                                new WaitCommand(0.0667),
-                                                                                outtake.feedOuttake(0.0)),
-                                                                new SequentialCommandGroup(
+                                                                Commands.waitUntil(() -> {
+                                                                        return vision.detectsPiece();
+                                                                }).withTimeout(0.3),
+                                                                new WaitCommand(0.25),
 
-                                                                                // Go to third branch, front left R
-                                                                                loadPath("StationToFrontLeftR"),
-                                                                                new AlignReef(align,
-                                                                                                AlignRequestType.RIGHT_REEF_ALIGN,
-                                                                                                new ChassisSpeeds(1.2,
-                                                                                                                1.0,
-                                                                                                                1.65),
-                                                                                                new Translation3d(0.015,
-                                                                                                                0.015,
-                                                                                                                0.01),
-                                                                                                2)
-                                                                                                .withTimeout(1),
-                                                                                Commands.runOnce(() -> {
-                                                                                        drivetrain.driveRobotRelative(
-                                                                                                        new ChassisSpeeds(
-                                                                                                                        0,
-                                                                                                                        0,
-                                                                                                                        0));
-                                                                                }))),
+                                                                // Go to second branch, front left L
+                                                                loadPath("StationToFrontLeftL"),
 
-                                                outtake.stopMotors(),
+                                                                new AlignReef(align,
+                                                                                AlignRequestType.LEFT_REEF_ALIGN,
+                                                                                new ChassisSpeeds(0.9,
+                                                                                                0.725,
+                                                                                                1.65),
+                                                                                new Translation3d(0.015,
+                                                                                                0.015,
+                                                                                                0.01),
+                                                                                2).withTimeout(0.4))),
 
-                                                // Go to third branch, front left
-                                                elevator.setTargetHeightCommand(
-                                                                Constants.ElevatorConstants.level3Encoder + 0000),
+                                outtake.stopMotors(),
+                                // RobotContainer.getIntakeCommand(),
+                                elevator.setTargetHeightCommand(
+                                                Constants.ElevatorConstants.level4Encoder + 1),
+                                new AlignReef(align, AlignRequestType.LEFT_REEF_ALIGN,
+                                                new ChassisSpeeds(0.9 + 0.15, 0.725 + 0.15, 1.65 + 0.15),
+                                                new Translation3d(0.015, 0.015, 0.01),
+                                                2).withTimeout(0.4),
 
-                                                RobotContainer.getScoreSequenceL4Command()
+                                // Place second piece
+                                RobotContainer.getScoreSequenceL4Command(),
 
-                                );
+                                // Start intaking for third piece but end process after driving & delay
+                                new ParallelCommandGroup(
+                                                new SequentialCommandGroup(
+                                                                RobotContainer.getAutoIntakeCommand(),
+                                                                elevator.setTargetHeightCommand(
+                                                                                Constants.ElevatorConstants.level4Encoder
+                                                                                                + 0.8),
+                                                                outtake.feedOuttake(-0.2235),
+                                                                new WaitCommand(0.0667),
+                                                                outtake.feedOuttake(0.0)),
+                                                new SequentialCommandGroup(
+                                                                loadPath("FrontLeftLToStation"),
 
-                        case "Middle":
-                                return new SequentialCommandGroup(
-                                                Commands.run(() -> {
-                                                        drivetrain.resetPose(new Pose2d(7.300, 4.180,
-                                                                        new Rotation2d(Units.degreesToRadians(0))));
-                                                }),
-                                                // TODO FINISH THIS IT DOESN'T WPRL YET
+                                                                Commands.waitUntil(() -> {
+                                                                        return vision.detectsPiece();
+                                                                }).withTimeout(0.3),
+                                                                new WaitCommand(0.25),
+                                                                // Go to third branch, front left R
+                                                                loadPath("StationToFrontLeftR"),
+                                                                new AlignReef(align,
+                                                                                AlignRequestType.RIGHT_REEF_ALIGN,
+                                                                                new ChassisSpeeds(1.2,
+                                                                                                1.0,
+                                                                                                1.65),
+                                                                                new Translation3d(0.015,
+                                                                                                0.015,
+                                                                                                0.01),
+                                                                                2)
+                                                                                .withTimeout(0.6),
+                                                                Commands.runOnce(() -> {
+                                                                        drivetrain.driveRobotRelative(
+                                                                                        new ChassisSpeeds(
+                                                                                                        0,
+                                                                                                        0,
+                                                                                                        0));
+                                                                }))),
 
-                                                // Algae arm stow
-                                                algae.setTargetAngleDegrees(90),
+                                outtake.stopMotors(),
 
-                                                // Move elevator up a bit to get ready
-                                                elevator.setTargetHeightCommand(
-                                                                Constants.ElevatorConstants.level3Encoder +
-                                                                                1000),
-                                                new WaitCommand(1),
+                                // Go to third branch, front left
+                                elevator.setTargetHeightCommand(
+                                                Constants.ElevatorConstants.level4Encoder + 0.8),
 
-                                                // Go to first piece, back left R
-                                                loadPath("NewAuto"),
+                                RobotContainer.getScoreSequenceL4Command(),
+                                elevator.setTargetHeightCommand(
+                                                Constants.ElevatorConstants.loadingStationEncoder),
 
-                                                new WaitCommand(1),
+                                // Fourth piece
+                                new ParallelCommandGroup(
+                                                new SequentialCommandGroup(
+                                                                loadPath("FrontLeftRToStation"),
+                                                                Commands.waitUntil(() -> {
+                                                                        return vision.detectsPiece();
+                                                                }).withTimeout(0.3),
+                                                                new WaitCommand(0.25),
+                                                                // Go to third branch, front left R
+                                                                loadPath("StationToCenter")),
+                                                new SequentialCommandGroup(
+                                                                RobotContainer.getAutoIntakeCommand(),
+                                                                elevator.setTargetHeightCommand(
+                                                                                Constants.ElevatorConstants.level2Encoder),
+                                                                outtake.feedOuttake(-0.2),
+                                                                new WaitCommand(0.0667),
+                                                                outtake.feedOuttake(0.0))),
+                                outtake.feedOuttake(0.4)
 
-                                                // Place first piece, back left R
-                                                RobotContainer.getScoreSequenceL4Command());
-                        case "Nothing":
-                                return new InstantCommand();
-                        default:
-                                return new InstantCommand();
+                );
+        }
+
+        public Command getCenterLeftHighNetNet() {
+                return new SequentialCommandGroup(
+                                Commands.runOnce(() -> {
+                                        if (RobotContainer.isRed()) {
+                                                drivetrain.resetPose(new Pose2d(10.250, 4.180,
+                                                                new Rotation2d(Units.degreesToRadians(0))));
+                                        } else {
+                                                drivetrain.resetPose(new Pose2d(7.300, 4.180,
+                                                                new Rotation2d(Units.degreesToRadians(180))));
+                                        }
+                                }),
+                                // TODO FINISH THIS IT DOESN'T WORK YET
+
+                                // Algae arm stow
+                                algae.setTargetAngleDegrees(90),
+
+                                // Move elevator up a bit to get ready
+                                elevator.setTargetHeightCommand(
+                                                Constants.ElevatorConstants.level3Encoder),
+
+                                // Go to first piece, back left R
+                                loadPath("CenterToLeftCenterBack"),
+
+                                // Place first piece, back left R
+                                RobotContainer.getScoreSequenceL4Command(),
+                                elevator.setTargetHeightCommand(Constants.ElevatorConstants.elevatorLowHeight),
+                                new ParallelCommandGroup(
+                                                loadPath("CenterAndBack"),
+                                                new SequentialCommandGroup(
+                                                                new WaitCommand(0.385),
+                                                                RobotContainer.getAlgaeLowCommandAUTOFIRST())),
+
+                                new ParallelCommandGroup(loadPath("CenterToNet"),
+                                                new SequentialCommandGroup(RobotContainer.getAlgaeCommandAUTOSECOND(),
+                                                                RobotContainer.getAlgaeScoreNetInitial())),
+                                RobotContainer.getAlgaeScoreNetFinal(),
+                                new ParallelCommandGroup(
+                                                RobotContainer.getAlgaeHighCommandALGAEFIRST(),
+                                                loadPath("NetToBackLeft")),
+                                new ParallelCommandGroup(loadPath("LeftToNet"),
+                                                new SequentialCommandGroup(RobotContainer.getAlgaeCommandAUTOSECOND(),
+                                                                RobotContainer.getAlgaeScoreNetInitial())),
+                                RobotContainer.getAlgaeScoreNetFinal(),
+                                loadPath("NetOffLine")
+
+                );
+        }
+
+        public Command getAuto(String name) {
+                if (name.equals("Left 3")) {
+                        return getLeftThreePiece();
                 }
+                if (name.equals("Center-L High-Net-Net")) {
+                        return getCenterLeftHighNetNet();
+                }
+                // System.out.println(name);
+                return new InstantCommand();
+        }
+
+        public Command getTestAuto() {
+                return new SequentialCommandGroup(Commands.runOnce(() -> {
+                        if (RobotContainer.isRed()) {
+                                drivetrain.resetPose(new Pose2d(10.250, 4.180,
+                                                new Rotation2d(Units.degreesToRadians(0))));
+                        } else {
+                                drivetrain.resetPose(new Pose2d(7.300, 4.180,
+                                                new Rotation2d(Units.degreesToRadians(180))));
+                        }
+                }),
+                                elevator.getEncoderResetCommand(),
+                                algae.setTargetAngleDegrees(90),
+                                loadPath("NewAuto"));
         }
 
         private Command loadPath(String name) {

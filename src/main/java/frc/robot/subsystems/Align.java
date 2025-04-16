@@ -66,9 +66,9 @@ public class Align extends SubsystemBase {
     SmartDashboard.putNumber("controller angle", RobotContainer.getAlignRequestAngle());
     setAlignCommands();
 
-    if (RobotContainer.getBestAlignCameraTarget()[1] < 0.5) {
+    /*if (RobotContainer.getBestAlignCameraTarget()[1] < 0.5) {
       timesAligned++;
-    }
+    }*/
 
     Pose2d leftTargetPose;
     Pose2d rightTargetPose;
@@ -269,44 +269,5 @@ public class Align extends SubsystemBase {
     drive.driveFieldRelative(speeds);
 
     return xAlignSpeed == 0.0 && yAlignSpeed == 0.0 && thetaAlignSpeed == 0.0;
-  }
-
-  public void alignReefRough(AlignRequestType side) {
-
-    if (side == AlignRequestType.LEFT_REEF_ALIGN)
-      CommandScheduler.getInstance().schedule(leftAlignCommand.andThen(alignReefColor()));
-    else
-      CommandScheduler.getInstance().schedule(rightAlignCommand.andThen(alignReefColor()));
-
-  }
-
-  // Align reef command
-  public Command alignReefRoughWithString(String path) {
-    return Commands.runOnce(() -> {
-      RobotContainer.setRobotMode(RobotMode.ALIGN_REEF_ROUGH);
-    }).andThen(new SequentialCommandGroup(
-        drive.alignReef(path),
-        Commands.runOnce(() -> {
-          RobotContainer.setRobotMode(RobotMode.NONE);
-        })));
-  };
-
-  public Command alignReefColor() {
-    return Commands.runOnce(() -> {
-      RobotContainer.setRobotMode(RobotMode.ALIGN_REEF_FINE);
-    }).andThen(Commands.run(() -> {
-      timesAligned = 0;
-      double[] offsets = RobotContainer.getBestAlignCameraTarget();
-      double strafeSpeed = Constants.VisionConstants.strafeAlignPID.calculate(offsets[0]);
-      strafeSpeed = MathUtil.clamp(strafeSpeed, -1, 1);
-      ChassisSpeeds speeds = new ChassisSpeeds(0, strafeSpeed, 0);
-
-      drive.driveRobotRelative(speeds);
-    }).until(() -> {
-      return Math.abs(RobotContainer.getBestAlignCameraTarget()[1]) < 0.5 && timesAligned > 5;
-    })).withTimeout(1.15).andThen(Commands.runOnce(() -> {
-      RobotContainer.setRobotMode(RobotMode.NONE);
-      RobotContainer.addAlert(new AlertBody(AlertMode.FULLY_ALIGNED, 0.8));
-    }));
   }
 }

@@ -50,6 +50,7 @@ public class Constants {
 			public static final Pose2d backLeftRPoseAlignRed = new Pose2d(12.33, 3.06,
 					new Rotation2d(Units.degreesToRadians(60)));
 
+					
 			// Back center positions
 			public static final Pose2d backCenterLPoseAlignRed = new Pose2d(11.8, 3.87,
 					new Rotation2d(Units.degreesToRadians(0)));
@@ -57,9 +58,9 @@ public class Constants {
 					new Rotation2d(Units.degreesToRadians(0)));
 
 			// Back right positions
-			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.4, 4.93,
+			public static final Pose2d backRightLPoseAlignRed = new Pose2d(12.27, 5.03,
 					new Rotation2d(Units.degreesToRadians(-60)));
-			public static final Pose2d backRightRPoseAlignRed = new Pose2d(12.61, 5.12,
+			public static final Pose2d backRightRPoseAlignRed = new Pose2d(12.6, 5.14,
 					new Rotation2d(Units.degreesToRadians(-60)));
 
 			public static final Pose2d[][] redFeefPoses = { { frontRightLPoseAlignRed, frontRightRPoseAlignRed },
@@ -176,12 +177,11 @@ public class Constants {
 		public static final int elevatorLowHeight = 30;
 		public static final int elevatorHighHeight = 200;
 
-		public static final int loadingStationEncoder = 100/1000;
-		public static final int level1Encoder = 12500/1000;
-		public static final int level2Encoder = 10000/1000;
-		public static final double level3Encoder = 23.5;
-		public static final double level4Encoder = 41.1;
-		public static final int alignIdleEncoder = 6500/1000;
+		public static final double loadingStationEncoder = 0.975;
+		public static final double level1Encoder = 12.5;
+		public static final double level2Encoder = 10;
+		public static final double level3Encoder = 23.0;
+		public static final double level4Encoder = 39.6;
 
 		public static final int lowAlgaeEncoder = 19500/1000;
 		public static final int highAlgaeEncoder = 30;
@@ -197,7 +197,7 @@ public class Constants {
 		public static final int rightGrabberMotorId = 16;
 
 		public static final int algaeLaserCanId = 1;
-		public static final double algaeSensorDistance = 15;
+		public static final double algaeSensorDistance = 20;
 
 		public static final TalonFXConfiguration deployMotorConfig = new TalonFXConfiguration().withCurrentLimits(
 				new CurrentLimitsConfigs()
@@ -212,10 +212,10 @@ public class Constants {
 		public static final int algaeEncoderChannel = 3;
 
 		// 0 degrees
-		public static double algaeDownEncoder = 0.379;
+		public static double algaeDownEncoder = 0.547;
 
 		// 90 degrees
-		public static double algaeUpEncoder = 0.131;
+		public static double algaeUpEncoder = 0.29;
 
 		public static ArmFeedforward emptyLoadArmFeedForward = new ArmFeedforward(0.0, 0.01, 0);
 		public static ArmFeedforward algaeLoadArmFeedForward = new ArmFeedforward(0, 0, 0);
@@ -228,29 +228,8 @@ public class Constants {
 	}
 
 	public static class IntakeConstants {
-		public static final int leftIntakeMotorId = 12;
-		public static final int rightIntakeMotorId = 13;
 
-		public static final double leftMotorSpeed = 0.7;
-		public static final double rightMotorSpeed = 0.8;
-
-		public static final double intakeSensorDelay = 0.1;
-
-		public static final TalonFXConfiguration leftIntakeMotorConfig = new TalonFXConfiguration().withCurrentLimits(
-				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(20))
-						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(20))
-						.withSupplyCurrentLimitEnable(true))
-				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
-
-		public static final TalonFXConfiguration rightIntakeMotorConfig = new TalonFXConfiguration().withCurrentLimits(
-				new CurrentLimitsConfigs()
-						.withStatorCurrentLimit(Amps.of(20))
-						.withStatorCurrentLimitEnable(true)
-						.withSupplyCurrentLimit(Amps.of(20))
-						.withSupplyCurrentLimitEnable(true))
-				.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+		public static final int starMotorId = 7;
 
 	}
 
@@ -285,10 +264,10 @@ public class Constants {
 		public static PIDController thetaController = new PIDController(7, 0, 0);
 
 		// Drive forward
-		public static PIDController xControllerRobot = new PIDController(10, 0, 0);
+		public static PIDController xControllerRobot = new PIDController(3.5, 0, 0);
 
 		// Drive left/right
-		public static PIDController yControllerRobot = new PIDController(5, 0, 0);
-		public static PIDController thetaControllerRobot = new PIDController(3, 0, 0);
+		public static PIDController yControllerRobot = new PIDController(3.5, 0.0, 0);
+		public static PIDController thetaControllerRobot = new PIDController(4.15, 0.0, 0);
 	}
 }
